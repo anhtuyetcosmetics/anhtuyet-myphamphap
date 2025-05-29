@@ -15,38 +15,38 @@ import {
 } from 'lucide-react';
 
 const mockProducts = [
-  { id: 1, name: 'Premium Coffee Beans', category: 'Beverages', price: 24.99, stock: 150, status: 'In Stock' },
-  { id: 2, name: 'Organic Tea Collection', category: 'Beverages', price: 18.50, stock: 8, status: 'Low Stock' },
-  { id: 3, name: 'Artisan Chocolate Bar', category: 'Confectionery', price: 12.99, stock: 0, status: 'Out of Stock' },
-  { id: 4, name: 'Fresh Croissants', category: 'Bakery', price: 3.50, stock: 45, status: 'In Stock' },
-  { id: 5, name: 'Gourmet Sandwich', category: 'Food', price: 8.99, stock: 23, status: 'In Stock' },
+  { id: 1, name: 'Hạt cà phê cao cấp', category: 'Đồ uống', price: 249000, stock: 150, status: 'Còn hàng' },
+  { id: 2, name: 'Bộ sưu tập trà hữu cơ', category: 'Đồ uống', price: 185000, stock: 8, status: 'Sắp hết' },
+  { id: 3, name: 'Thanh chocolate thủ công', category: 'Kẹo', price: 129000, stock: 0, status: 'Hết hàng' },
+  { id: 4, name: 'Bánh croissant tươi', category: 'Bánh kẹo', price: 35000, stock: 45, status: 'Còn hàng' },
+  { id: 5, name: 'Bánh sandwich cao cấp', category: 'Thức ăn', price: 89000, stock: 23, status: 'Còn hàng' },
 ];
 
 export const ProductManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'In Stock': return 'bg-emerald-100 text-emerald-800';
-      case 'Low Stock': return 'bg-amber-100 text-amber-800';
-      case 'Out of Stock': return 'bg-red-100 text-red-800';
+      case 'Còn hàng': return 'bg-emerald-100 text-emerald-800';
+      case 'Sắp hết': return 'bg-amber-100 text-amber-800';
+      case 'Hết hàng': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const filteredProducts = mockProducts.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory === 'All' || product.category === selectedCategory)
+    (selectedCategory === 'Tất cả' || product.category === selectedCategory)
   );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
         <Button className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
-          Add Product
+          Thêm sản phẩm
         </Button>
       </div>
 
@@ -57,7 +57,7 @@ export const ProductManager = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search products..."
+                placeholder="Tìm kiếm sản phẩm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -68,11 +68,11 @@ export const ProductManager = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="All">All Categories</option>
-              <option value="Beverages">Beverages</option>
-              <option value="Confectionery">Confectionery</option>
-              <option value="Bakery">Bakery</option>
-              <option value="Food">Food</option>
+              <option value="Tất cả">Tất cả danh mục</option>
+              <option value="Đồ uống">Đồ uống</option>
+              <option value="Kẹo">Kẹo</option>
+              <option value="Bánh kẹo">Bánh kẹo</option>
+              <option value="Thức ăn">Thức ăn</option>
             </select>
           </div>
         </CardContent>
@@ -98,22 +98,22 @@ export const ProductManager = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <DollarSign className="h-4 w-4 text-gray-500" />
-                    <span className="text-lg font-bold text-gray-900">${product.price}</span>
+                    <span className="text-lg font-bold text-gray-900">{product.price.toLocaleString('vi-VN')} ₫</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{product.stock} units</span>
+                    <span className="text-sm text-gray-600">{product.stock} sản phẩm</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2 pt-3 border-t">
                   <Button variant="outline" size="sm" className="flex-1">
                     <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    Sửa
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1">
                     <BarChart3 className="h-4 w-4 mr-1" />
-                    Analytics
+                    Thống kê
                   </Button>
                   <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                     <Trash2 className="h-4 w-4" />
@@ -129,8 +129,8 @@ export const ProductManager = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy sản phẩm</h3>
+            <p className="text-gray-500">Thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc.</p>
           </CardContent>
         </Card>
       )}

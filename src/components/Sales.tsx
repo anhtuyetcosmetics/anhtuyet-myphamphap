@@ -15,11 +15,11 @@ import {
 } from 'lucide-react';
 
 const availableProducts = [
-  { id: 1, name: 'Premium Coffee Beans', price: 24.99, stock: 150 },
-  { id: 2, name: 'Organic Tea Collection', price: 18.50, stock: 8 },
-  { id: 3, name: 'Artisan Chocolate Bar', price: 12.99, stock: 0 },
-  { id: 4, name: 'Fresh Croissants', price: 3.50, stock: 45 },
-  { id: 5, name: 'Gourmet Sandwich', price: 8.99, stock: 23 },
+  { id: 1, name: 'Hạt cà phê cao cấp', price: 249000, stock: 150 },
+  { id: 2, name: 'Bộ sưu tập trà hữu cơ', price: 185000, stock: 8 },
+  { id: 3, name: 'Thanh chocolate thủ công', price: 129000, stock: 0 },
+  { id: 4, name: 'Bánh croissant tươi', price: 35000, stock: 45 },
+  { id: 5, name: 'Bánh sandwich cao cấp', price: 89000, stock: 23 },
 ];
 
 export const Sales = () => {
@@ -55,7 +55,7 @@ export const Sales = () => {
   };
 
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = total * 0.08; // 8% tax
+  const tax = total * 0.1; // 10% VAT
   const grandTotal = total + tax;
 
   const filteredProducts = availableProducts.filter(product =>
@@ -64,8 +64,8 @@ export const Sales = () => {
 
   const processPayment = () => {
     // Here you would integrate with your Java Spring Boot backend
-    console.log('Processing payment...', { cart, customerName, total: grandTotal });
-    alert('Payment processed successfully!');
+    console.log('Đang xử lý thanh toán...', { cart, customerName, total: grandTotal });
+    alert('Thanh toán thành công!');
     setCart([]);
     setCustomerName('');
   };
@@ -73,10 +73,10 @@ export const Sales = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Point of Sale</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Điểm bán hàng</h1>
         <Button variant="outline">
           <Scan className="h-4 w-4 mr-2" />
-          Scan Barcode
+          Quét mã vạch
         </Button>
       </div>
 
@@ -85,9 +85,9 @@ export const Sales = () => {
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900">Products</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Sản phẩm</CardTitle>
               <Input
-                placeholder="Search products..."
+                placeholder="Tìm kiếm sản phẩm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -103,11 +103,11 @@ export const Sales = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-medium text-gray-900">{product.name}</h3>
                       <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                        {product.stock > 0 ? `${product.stock} left` : 'Out of stock'}
+                        {product.stock > 0 ? `Còn ${product.stock}` : 'Hết hàng'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-blue-600">${product.price}</span>
+                      <span className="text-lg font-bold text-blue-600">{product.price.toLocaleString('vi-VN')} ₫</span>
                       <Button 
                         size="sm" 
                         disabled={product.stock === 0}
@@ -132,19 +132,19 @@ export const Sales = () => {
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                Cart ({cart.length} items)
+                Giỏ hàng ({cart.length} sản phẩm)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {cart.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">Cart is empty</p>
+                  <p className="text-gray-500 text-center py-4">Giỏ hàng trống</p>
                 ) : (
                   cart.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
-                        <p className="text-xs text-gray-500">${item.price} each</p>
+                        <p className="text-xs text-gray-500">{item.price.toLocaleString('vi-VN')} ₫ mỗi sản phẩm</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -181,15 +181,15 @@ export const Sales = () => {
           {cart.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">Checkout</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">Thanh toán</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name (Optional)
+                    Tên khách hàng (Tùy chọn)
                   </label>
                   <Input
-                    placeholder="Enter customer name"
+                    placeholder="Nhập tên khách hàng"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                   />
@@ -197,27 +197,27 @@ export const Sales = () => {
 
                 <div className="space-y-2 pt-3 border-t">
                   <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Tạm tính:</span>
+                    <span>{total.toLocaleString('vi-VN')} ₫</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Tax (8%):</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>VAT (10%):</span>
+                    <span>{tax.toLocaleString('vi-VN')} ₫</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total:</span>
-                    <span>${grandTotal.toFixed(2)}</span>
+                    <span>Tổng cộng:</span>
+                    <span>{grandTotal.toLocaleString('vi-VN')} ₫</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={processPayment}>
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Process Payment
+                    Xử lý thanh toán
                   </Button>
                   <Button variant="outline" className="w-full">
                     <Receipt className="h-4 w-4 mr-2" />
-                    Save as Draft
+                    Lưu nháp
                   </Button>
                 </div>
               </CardContent>

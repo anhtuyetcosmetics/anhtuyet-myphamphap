@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 import { useSales } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
+import { CreateSaleDialog } from './CreateSaleDialog';
 
 export const Sales = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   const { data: sales, isLoading, error } = useSales();
   const { toast } = useToast();
@@ -66,7 +68,10 @@ export const Sales = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Quản lý bán hàng</h1>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => setShowCreateDialog(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Tạo đơn hàng
         </Button>
@@ -176,6 +181,29 @@ export const Sales = () => {
           </CardContent>
         </Card>
       )}
+
+      <CreateSaleDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog} 
+      />
     </div>
   );
 };
+
+function getStatusColor(status: string | null) {
+  switch (status) {
+    case 'completed': return 'bg-green-100 text-green-800';
+    case 'pending': return 'bg-yellow-100 text-yellow-800';
+    case 'cancelled': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function getStatusText(status: string | null) {
+  switch (status) {
+    case 'completed': return 'Hoàn thành';
+    case 'pending': return 'Đang xử lý';
+    case 'cancelled': return 'Đã hủy';
+    default: return 'Không xác định';
+  }
+}

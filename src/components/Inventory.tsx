@@ -1,157 +1,207 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  AlertTriangle, 
-  TrendingDown, 
-  Package, 
-  RefreshCw,
-  Plus,
-  Minus
+  Plus, 
+  Search, 
+  Package,
+  TrendingUp,
+  TrendingDown,
+  RotateCcw,
+  Calendar,
+  Loader2
 } from 'lucide-react';
-
-const inventoryData = [
-  { id: 1, name: 'Hạt cà phê cao cấp', currentStock: 150, minStock: 50, maxStock: 300, status: 'Tốt', lastUpdated: '2024-01-15' },
-  { id: 2, name: 'Bộ sưu tập trà hữu cơ', currentStock: 8, minStock: 20, maxStock: 100, status: 'Thấp', lastUpdated: '2024-01-14' },
-  { id: 3, name: 'Thanh chocolate thủ công', currentStock: 0, minStock: 10, maxStock: 80, status: 'Hết', lastUpdated: '2024-01-10' },
-  { id: 4, name: 'Bánh croissant tươi', currentStock: 45, minStock: 30, maxStock: 120, status: 'Tốt', lastUpdated: '2024-01-15' },
-  { id: 5, name: 'Bánh sandwich cao cấp', currentStock: 23, minStock: 15, maxStock: 60, status: 'Tốt', lastUpdated: '2024-01-15' },
-];
+import { useInventoryTransactions } from '@/hooks/useInventory';
+import { AddInventoryDialog } from '@/components/AddInventoryDialog';
+import { useToast } from '@/hooks/use-toast';
 
 export const Inventory = () => {
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'Tốt': return { color: 'bg-emerald-100 text-emerald-800', icon: Package };
-      case 'Thấp': return { color: 'bg-amber-100 text-amber-800', icon: AlertTriangle };
-      case 'Hết': return { color: 'bg-red-100 text-red-800', icon: TrendingDown };
-      default: return { color: 'bg-gray-100 text-gray-800', icon: Package };
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState('Tất cả');
+  
+  const { data: transactions, isLoading, error } = useInventoryTransactions();
+  const { toast } = useToast();
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'nhap': return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'xuat': return <TrendingDown className="h-4 w-4 text-red-600" />;
+      case 'dieu_chinh': return <RotateCcw className="h-4 w-4 text-blue-600" />;
+      default: return <Package className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getStockPercentage = (current: number, max: number) => {
-    return Math.min((current / max) * 100, 100);
+  const getTransactionText = (type: string) => {
+    switch (type) {
+      case 'nhap': return 'Nhập kho';
+      case 'xuat': return 'Xuất kho';
+      case 'dieu_chinh': return 'Điều chỉnh';
+      default: return type;
+    }
   };
+
+  const getTransactionColor = (type: string) => {
+    switch (type) {
+      case 'nhap': return 'bg-green-100 text-green-800';
+      case 'xuat': return 'bg-red-100 text-red-800';
+      case 'dieu_chinh': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-600">
+        Có lỗi xảy ra khi tải dữ liệu giao dịch kho
+      </div>
+    );
+  }
+
+  const transactionTypes = ['Tất cả', 'nhap', 'xuat', 'dieu_chinh'];
+  
+  const filteredTransactions = transactions?.filter(transaction =>
+    (transaction.products?.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     transaction.products?.ma_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     transaction.ghi_chu?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (selectedType === 'Tất cả' || transaction.loai_giao_dich === selectedType)
+  ) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý kho hàng</h1>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Đồng bộ kho
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý kho</h1>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Thêm giao dịch
         </Button>
       </div>
 
-      {/* Inventory Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Tổng sản phẩm</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">226</div>
-            <p className="text-xs text-gray-600 mt-1">Trên tất cả sản phẩm</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Sản phẩm sắp hết</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">1</div>
-            <p className="text-xs text-amber-600 mt-1">Cần nhập thêm</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Hết hàng</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">1</div>
-            <p className="text-xs text-red-600 mt-1">Cần xử lý ngay</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Inventory Table */}
+      {/* Search and Filter */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Mức tồn kho</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Sản phẩm</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Tồn kho hiện tại</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Mức tồn</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Cập nhật cuối</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventoryData.map((item) => {
-                  const statusInfo = getStatusInfo(item.status);
-                  const StatusIcon = statusInfo.icon;
-                  const stockPercentage = getStockPercentage(item.currentStock, item.maxStock);
-                  
-                  return (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-gray-900">{item.name}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-900">{item.currentStock} sản phẩm</div>
-                        <div className="text-xs text-gray-500">Tối thiểu: {item.minStock}, Tối đa: {item.maxStock}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full ${
-                              stockPercentage > 50 ? 'bg-emerald-600' :
-                              stockPercentage > 20 ? 'bg-amber-600' : 'bg-red-600'
-                            }`}
-                            style={{ width: `${stockPercentage}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">{stockPercentage.toFixed(0)}% công suất</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <Badge className={statusInfo.color}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {item.status}
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-4 text-gray-600 text-sm">
-                        {new Date(item.lastUpdated).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Tìm kiếm giao dịch..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {transactionTypes.map(type => (
+                <option key={type} value={type}>
+                  {type === 'Tất cả' ? type : getTransactionText(type)}
+                </option>
+              ))}
+            </select>
           </div>
         </CardContent>
       </Card>
+
+      {/* Transactions List */}
+      <div className="space-y-4">
+        {filteredTransactions.map((transaction) => (
+          <Card key={transaction.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    {getTransactionIcon(transaction.loai_giao_dich)}
+                    <Badge className={getTransactionColor(transaction.loai_giao_dich)}>
+                      {getTransactionText(transaction.loai_giao_dich)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {transaction.products?.ten_hang}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Mã: {transaction.products?.ma_hang}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-6">
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">
+                      {transaction.loai_giao_dich === 'xuat' ? '-' : '+'}{transaction.so_luong}
+                    </p>
+                    <p className="text-sm text-gray-500">Số lượng</p>
+                  </div>
+
+                  {transaction.gia_tri && (
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">
+                        {transaction.gia_tri.toLocaleString('vi-VN')} ₫
+                      </p>
+                      <p className="text-sm text-gray-500">Giá trị</p>
+                    </div>
+                  )}
+
+                  <div className="text-right">
+                    <div className="flex items-center space-x-1 text-sm text-gray-500">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {transaction.ngay_giao_dich 
+                          ? new Date(transaction.ngay_giao_dich).toLocaleDateString('vi-VN')
+                          : 'N/A'
+                        }
+                      </span>
+                    </div>
+                    {transaction.nguoi_thuc_hien && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {transaction.nguoi_thuc_hien}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {transaction.ghi_chu && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm text-gray-600">{transaction.ghi_chu}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredTransactions.length === 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy giao dịch</h3>
+            <p className="text-gray-500">Thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <AddInventoryDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen} 
+      />
     </div>
   );
 };

@@ -9,6 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          dia_chi: string | null
+          dien_thoai: string | null
+          email: string | null
+          id: number
+          ma_khach_hang: string
+          ngay_tao: string | null
+          ten_khach_hang: string
+          tong_mua: number | null
+        }
+        Insert: {
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          id?: number
+          ma_khach_hang: string
+          ngay_tao?: string | null
+          ten_khach_hang: string
+          tong_mua?: number | null
+        }
+        Update: {
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          id?: number
+          ma_khach_hang?: string
+          ngay_tao?: string | null
+          ten_khach_hang?: string
+          tong_mua?: number | null
+        }
+        Relationships: []
+      }
+      inventory_transactions: {
+        Row: {
+          ghi_chu: string | null
+          gia_tri: number | null
+          id: number
+          loai_giao_dich: string
+          ngay_giao_dich: string | null
+          nguoi_thuc_hien: string | null
+          product_id: number | null
+          so_luong: number
+        }
+        Insert: {
+          ghi_chu?: string | null
+          gia_tri?: number | null
+          id?: number
+          loai_giao_dich: string
+          ngay_giao_dich?: string | null
+          nguoi_thuc_hien?: string | null
+          product_id?: number | null
+          so_luong: number
+        }
+        Update: {
+          ghi_chu?: string | null
+          gia_tri?: number | null
+          id?: number
+          loai_giao_dich?: string
+          ngay_giao_dich?: string | null
+          nguoi_thuc_hien?: string | null
+          product_id?: number | null
+          so_luong?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           du_kien_het_hang: string | null
@@ -47,6 +121,169 @@ export type Database = {
           ton_kho_lon_nhat?: string | null
         }
         Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          gia_nhap: number
+          id: number
+          product_id: number | null
+          purchase_order_id: number | null
+          so_luong: number
+          thanh_tien: number | null
+        }
+        Insert: {
+          gia_nhap: number
+          id?: number
+          product_id?: number | null
+          purchase_order_id?: number | null
+          so_luong: number
+          thanh_tien?: number | null
+        }
+        Update: {
+          gia_nhap?: number
+          id?: number
+          product_id?: number | null
+          purchase_order_id?: number | null
+          so_luong?: number
+          thanh_tien?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          ghi_chu: string | null
+          id: number
+          ma_don_nhap: string
+          ngay_dat: string | null
+          ngay_giao_hang: string | null
+          supplier_id: number | null
+          tong_tien: number | null
+          trang_thai: string | null
+        }
+        Insert: {
+          ghi_chu?: string | null
+          id?: number
+          ma_don_nhap: string
+          ngay_dat?: string | null
+          ngay_giao_hang?: string | null
+          supplier_id?: number | null
+          tong_tien?: number | null
+          trang_thai?: string | null
+        }
+        Update: {
+          ghi_chu?: string | null
+          id?: number
+          ma_don_nhap?: string
+          ngay_dat?: string | null
+          ngay_giao_hang?: string | null
+          supplier_id?: number | null
+          tong_tien?: number | null
+          trang_thai?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_items: {
+        Row: {
+          gia_ban: number
+          id: number
+          product_id: number | null
+          sale_id: number | null
+          so_luong: number
+          thanh_tien: number | null
+        }
+        Insert: {
+          gia_ban: number
+          id?: number
+          product_id?: number | null
+          sale_id?: number | null
+          so_luong: number
+          thanh_tien?: number | null
+        }
+        Update: {
+          gia_ban?: number
+          id?: number
+          product_id?: number | null
+          sale_id?: number | null
+          so_luong?: number
+          thanh_tien?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          customer_id: number | null
+          ghi_chu: string | null
+          id: number
+          ma_don_hang: string
+          ngay_ban: string | null
+          tong_tien: number
+          trang_thai: string | null
+        }
+        Insert: {
+          customer_id?: number | null
+          ghi_chu?: string | null
+          id?: number
+          ma_don_hang: string
+          ngay_ban?: string | null
+          tong_tien?: number
+          trang_thai?: string | null
+        }
+        Update: {
+          customer_id?: number | null
+          ghi_chu?: string | null
+          id?: number
+          ma_don_hang?: string
+          ngay_ban?: string | null
+          tong_tien?: number
+          trang_thai?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {

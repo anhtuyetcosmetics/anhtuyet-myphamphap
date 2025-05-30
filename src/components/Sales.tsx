@@ -5,226 +5,177 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ShoppingCart, 
   Plus, 
-  Minus, 
-  Trash2, 
-  CreditCard,
-  Receipt,
-  Scan
+  Search, 
+  ShoppingCart,
+  User,
+  Calendar,
+  DollarSign,
+  Eye,
+  Loader2
 } from 'lucide-react';
-
-const availableProducts = [
-  { id: 1, name: 'Hạt cà phê cao cấp', price: 249000, stock: 150 },
-  { id: 2, name: 'Bộ sưu tập trà hữu cơ', price: 185000, stock: 8 },
-  { id: 3, name: 'Thanh chocolate thủ công', price: 129000, stock: 0 },
-  { id: 4, name: 'Bánh croissant tươi', price: 35000, stock: 45 },
-  { id: 5, name: 'Bánh sandwich cao cấp', price: 89000, stock: 23 },
-];
+import { useSales } from '@/hooks/useSales';
+import { useToast } from '@/hooks/use-toast';
 
 export const Sales = () => {
-  const [cart, setCart] = useState<Array<{ id: number; name: string; price: number; quantity: number }>>([]);
-  const [customerName, setCustomerName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const { data: sales, isLoading, error } = useSales();
+  const { toast } = useToast();
 
-  const addToCart = (product: typeof availableProducts[0]) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === product.id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+  const getStatusColor = (status: string | null) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCart(cart.filter(item => item.id !== id));
-    } else {
-      setCart(cart.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      ));
+  const getStatusText = (status: string | null) => {
+    switch (status) {
+      case 'completed': return 'Hoàn thành';
+      case 'pending': return 'Đang xử lý';
+      case 'cancelled': return 'Đã hủy';
+      default: return 'Không xác định';
     }
   };
 
-  const removeFromCart = (id: number) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = total * 0.1; // 10% VAT
-  const grandTotal = total + tax;
+  if (error) {
+    return (
+      <div className="text-center text-red-600">
+        Có lỗi xảy ra khi tải dữ liệu bán hàng
+      </div>
+    );
+  }
 
-  const filteredProducts = availableProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const processPayment = () => {
-    // Here you would integrate with your Java Spring Boot backend
-    console.log('Đang xử lý thanh toán...', { cart, customerName, total: grandTotal });
-    alert('Thanh toán thành công!');
-    setCart([]);
-    setCustomerName('');
-  };
+  const filteredSales = sales?.filter(sale =>
+    sale.ma_don_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sale.customers?.ten_khach_hang.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Điểm bán hàng</h1>
-        <Button variant="outline">
-          <Scan className="h-4 w-4 mr-2" />
-          Quét mã vạch
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý bán hàng</h1>
+        <Button className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Tạo đơn hàng
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Product Selection */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900">Sản phẩm</CardTitle>
-              <Input
-                placeholder="Tìm kiếm sản phẩm..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => product.stock > 0 && addToCart(product)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{product.name}</h3>
-                      <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                        {product.stock > 0 ? `Còn ${product.stock}` : 'Hết hàng'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-blue-600">{product.price.toLocaleString('vi-VN')} ₫</span>
-                      <Button 
-                        size="sm" 
-                        disabled={product.stock === 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(product);
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Search */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Tìm kiếm đơn hàng..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Cart and Checkout */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Giỏ hàng ({cart.length} sản phẩm)
-              </CardTitle>
+      {/* Sales Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredSales.map((sale) => (
+          <Card key={sale.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Đơn hàng #{sale.ma_don_hang}
+                  </CardTitle>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {sale.customers?.ten_khach_hang || 'Khách lẻ'}
+                    </span>
+                  </div>
+                </div>
+                <Badge className={getStatusColor(sale.trang_thai)}>
+                  {getStatusText(sale.trang_thai)}
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {cart.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">Giỏ hàng trống</p>
-                ) : (
-                  cart.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
-                        <p className="text-xs text-gray-500">{item.price.toLocaleString('vi-VN')} ₫ mỗi sản phẩm</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {sale.ngay_ban ? new Date(sale.ngay_ban).toLocaleDateString('vi-VN') : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-gray-500" />
+                    <span className="text-lg font-bold text-gray-900">
+                      {sale.tong_tien.toLocaleString('vi-VN')} ₫
+                    </span>
+                  </div>
+                </div>
+
+                {sale.sale_items && sale.sale_items.length > 0 && (
+                  <div className="pt-3 border-t">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Sản phẩm ({sale.sale_items.length} món):
+                    </p>
+                    <div className="space-y-1 max-h-20 overflow-y-auto">
+                      {sale.sale_items.slice(0, 3).map((item, index) => (
+                        <div key={index} className="flex justify-between text-xs text-gray-600">
+                          <span>{item.products?.ten_hang}</span>
+                          <span>{item.so_luong}x</span>
+                        </div>
+                      ))}
+                      {sale.sale_items.length > 3 && (
+                        <p className="text-xs text-gray-500">+{sale.sale_items.length - 3} sản phẩm khác</p>
+                      )}
                     </div>
-                  ))
+                  </div>
                 )}
+
+                {sale.ghi_chu && (
+                  <div className="pt-3 border-t">
+                    <p className="text-sm text-gray-600">{sale.ghi_chu}</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2 pt-3 border-t">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Eye className="h-4 w-4 mr-1" />
+                    Chi tiết
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <ShoppingCart className="h-4 w-4 mr-1" />
+                    In hóa đơn
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          {cart.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">Thanh toán</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên khách hàng (Tùy chọn)
-                  </label>
-                  <Input
-                    placeholder="Nhập tên khách hàng"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2 pt-3 border-t">
-                  <div className="flex justify-between text-sm">
-                    <span>Tạm tính:</span>
-                    <span>{total.toLocaleString('vi-VN')} ₫</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>VAT (10%):</span>
-                    <span>{tax.toLocaleString('vi-VN')} ₫</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Tổng cộng:</span>
-                    <span>{grandTotal.toLocaleString('vi-VN')} ₫</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={processPayment}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Xử lý thanh toán
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Lưu nháp
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        ))}
       </div>
+
+      {filteredSales.length === 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy đơn hàng</h3>
+            <p className="text-gray-500">Thử điều chỉnh từ khóa tìm kiếm.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

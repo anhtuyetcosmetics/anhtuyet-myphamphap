@@ -9,7 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          du_kien_het_hang: string | null
+          gia_ban: number | null
+          gia_von: number | null
+          id: number
+          ma_hang: string
+          nhom_hang: string | null
+          ten_hang: string
+          thuong_hieu: string | null
+          ton_kho: number | null
+          ton_kho_lon_nhat: string | null
+        }
+        Insert: {
+          du_kien_het_hang?: string | null
+          gia_ban?: number | null
+          gia_von?: number | null
+          id?: number
+          ma_hang: string
+          nhom_hang?: string | null
+          ten_hang: string
+          thuong_hieu?: string | null
+          ton_kho?: number | null
+          ton_kho_lon_nhat?: string | null
+        }
+        Update: {
+          du_kien_het_hang?: string | null
+          gia_ban?: number | null
+          gia_von?: number | null
+          id?: number
+          ma_hang?: string
+          nhom_hang?: string | null
+          ten_hang?: string
+          thuong_hieu?: string | null
+          ton_kho?: number | null
+          ton_kho_lon_nhat?: string | null
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          dien_thoai: string | null
+          id: number
+          ma_nha_cung_cap: string
+          ten_nha_cung_cap: string
+          tong_mua: number | null
+        }
+        Insert: {
+          dien_thoai?: string | null
+          id?: number
+          ma_nha_cung_cap: string
+          ten_nha_cung_cap: string
+          tong_mua?: number | null
+        }
+        Update: {
+          dien_thoai?: string | null
+          id?: number
+          ma_nha_cung_cap?: string
+          ten_nha_cung_cap?: string
+          tong_mua?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

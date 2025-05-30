@@ -11,40 +11,83 @@ import {
   Trash2, 
   Package,
   DollarSign,
-  BarChart3
+  BarChart3,
+  Loader2
 } from 'lucide-react';
-
-const mockProducts = [
-  { id: 1, name: 'Hạt cà phê cao cấp', category: 'Đồ uống', price: 249000, stock: 150, status: 'Còn hàng' },
-  { id: 2, name: 'Bộ sưu tập trà hữu cơ', category: 'Đồ uống', price: 185000, stock: 8, status: 'Sắp hết' },
-  { id: 3, name: 'Thanh chocolate thủ công', category: 'Kẹo', price: 129000, stock: 0, status: 'Hết hàng' },
-  { id: 4, name: 'Bánh croissant tươi', category: 'Bánh kẹo', price: 35000, stock: 45, status: 'Còn hàng' },
-  { id: 5, name: 'Bánh sandwich cao cấp', category: 'Thức ăn', price: 89000, stock: 23, status: 'Còn hàng' },
-];
+import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
+import { AddProductDialog } from '@/components/AddProductDialog';
+import { EditProductDialog } from '@/components/EditProductDialog';
+import { useToast } from '@/hooks/use-toast';
 
 export const ProductManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  
+  const { data: products, isLoading, error } = useProducts();
+  const deleteProduct = useDeleteProduct();
+  const { toast } = useToast();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Còn hàng': return 'bg-emerald-100 text-emerald-800';
-      case 'Sắp hết': return 'bg-amber-100 text-amber-800';
-      case 'Hết hàng': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (stock: number | null) => {
+    if (stock === null || stock === 0) return 'bg-red-100 text-red-800';
+    if (stock < 10) return 'bg-amber-100 text-amber-800';
+    return 'bg-emerald-100 text-emerald-800';
+  };
+
+  const getStatusText = (stock: number | null) => {
+    if (stock === null || stock === 0) return 'Hết hàng';
+    if (stock < 10) return 'Sắp hết';
+    return 'Còn hàng';
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    try {
+      await deleteProduct.mutateAsync(id);
+      toast({
+        title: "Thành công",
+        description: "Đã xóa sản phẩm thành công",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa sản phẩm",
+        variant: "destructive",
+      });
     }
   };
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory === 'Tất cả' || product.category === selectedCategory)
-  );
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-600">
+        Có lỗi xảy ra khi tải dữ liệu sản phẩm
+      </div>
+    );
+  }
+
+  const categories = ['Tất cả', ...new Set(products?.map(p => p.nhom_hang).filter(Boolean) || [])];
+
+  const filteredProducts = products?.filter(product =>
+    product.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === 'Tất cả' || product.nhom_hang === selectedCategory)
+  ) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Thêm sản phẩm
         </Button>
@@ -68,11 +111,9 @@ export const ProductManager = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Tất cả">Tất cả danh mục</option>
-              <option value="Đồ uống">Đồ uống</option>
-              <option value="Kẹo">Kẹo</option>
-              <option value="Bánh kẹo">Bánh kẹo</option>
-              <option value="Thức ăn">Thức ăn</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
         </CardContent>
@@ -85,11 +126,12 @@ export const ProductManager = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">{product.name}</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">{product.category}</p>
+                  <CardTitle className="text-lg font-semibold text-gray-900">{product.ten_hang}</CardTitle>
+                  <p className="text-sm text-gray-500 mt-1">{product.nhom_hang || 'Chưa phân loại'}</p>
+                  <p className="text-xs text-gray-400 mt-1">Mã: {product.ma_hang}</p>
                 </div>
-                <Badge className={getStatusColor(product.status)}>
-                  {product.status}
+                <Badge className={getStatusColor(product.ton_kho)}>
+                  {getStatusText(product.ton_kho)}
                 </Badge>
               </div>
             </CardHeader>
@@ -98,16 +140,23 @@ export const ProductManager = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <DollarSign className="h-4 w-4 text-gray-500" />
-                    <span className="text-lg font-bold text-gray-900">{product.price.toLocaleString('vi-VN')} ₫</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {product.gia_ban?.toLocaleString('vi-VN') || 'N/A'} ₫
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{product.stock} sản phẩm</span>
+                    <span className="text-sm text-gray-600">{product.ton_kho || 0} sản phẩm</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2 pt-3 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => setEditingProduct(product)}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     Sửa
                   </Button>
@@ -115,7 +164,12 @@ export const ProductManager = () => {
                     <BarChart3 className="h-4 w-4 mr-1" />
                     Thống kê
                   </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleDeleteProduct(product.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -133,6 +187,19 @@ export const ProductManager = () => {
             <p className="text-gray-500">Thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc.</p>
           </CardContent>
         </Card>
+      )}
+
+      <AddProductDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen} 
+      />
+
+      {editingProduct && (
+        <EditProductDialog 
+          product={editingProduct}
+          open={!!editingProduct}
+          onOpenChange={(open) => !open && setEditingProduct(null)}
+        />
       )}
     </div>
   );

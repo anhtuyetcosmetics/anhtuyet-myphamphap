@@ -20,6 +20,40 @@ export interface InventoryTransactionWithProduct extends InventoryTransaction {
   };
 }
 
+export interface InventoryItem {
+  id: number;
+  ten_hang: string;
+  ma_hang: string;
+  so_luong_hien_tai: number;
+  ton_kho: number;
+}
+
+export const useInventory = () => {
+  return useQuery({
+    queryKey: ['inventory'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, ten_hang, ma_hang, ton_kho')
+        .order('ten_hang');
+      
+      if (error) {
+        console.error('Error fetching inventory:', error);
+        throw error;
+      }
+      
+      // Map the data to match the expected format
+      return data.map(product => ({
+        id: product.id,
+        ten_hang: product.ten_hang,
+        ma_hang: product.ma_hang,
+        so_luong_hien_tai: product.ton_kho || 0,
+        ton_kho: product.ton_kho || 0
+      })) as InventoryItem[];
+    },
+  });
+};
+
 export const useInventoryTransactions = () => {
   return useQuery({
     queryKey: ['inventory_transactions'],
@@ -62,6 +96,7 @@ export const useAddInventoryTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

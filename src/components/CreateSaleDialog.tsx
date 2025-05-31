@@ -176,12 +176,12 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
             
             <div className="space-y-2">
               <Label htmlFor="customer">Khách hàng</Label>
-              <Select value={customerId?.toString() || ''} onValueChange={(value) => setCustomerId(value ? parseInt(value) : null)}>
+              <Select value={customerId?.toString() || 'walk-in'} onValueChange={(value) => setCustomerId(value === 'walk-in' ? null : parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn khách hàng" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Khách lẻ</SelectItem>
+                  <SelectItem value="walk-in">Khách lẻ</SelectItem>
                   {customers?.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id.toString()}>
                       {customer.ten_khach_hang} ({customer.ma_khach_hang})
@@ -221,13 +221,14 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
                   <div>
                     <Label>Sản phẩm</Label>
                     <Select
-                      value={item.product_id?.toString() || ''}
-                      onValueChange={(value) => updateSaleItem(index, 'product_id', parseInt(value))}
+                      value={item.product_id?.toString() || 'no-product'}
+                      onValueChange={(value) => updateSaleItem(index, 'product_id', value === 'no-product' ? 0 : parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn sản phẩm" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-product">Chọn sản phẩm</SelectItem>
                         {products?.map((product) => (
                           <SelectItem key={product.id} value={product.id.toString()}>
                             {product.ten_hang}

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Search, Barcode, Camera } from 'lucide-react';
 import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 
 interface ProductSearchSelectProps {
   selectedProductId: number;
@@ -60,51 +60,67 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
     }
   };
 
-  const handleCameraCapture = () => {
+  const handleCameraCapture = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       setIsScanning(true);
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then((stream) => {
-          // Tạo video element để hiển thị camera
-          const video = document.createElement('video');
-          video.srcObject = stream;
-          video.play();
-          
-          // Tạo canvas để capture frame
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Sau 3 giây sẽ tự động dừng và thử detect
-          setTimeout(() => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx?.drawImage(video, 0, 0);
-            
-            // Dừng camera
-            stream.getTracks().forEach(track => track.stop());
-            setIsScanning(false);
-            
-            // Mô phỏng quét mã vạch thành công
-            const sampleBarcode = "3614273232715"; // Mã vạch mẫu từ database
-            setBarcodeInput(sampleBarcode);
-            toast({
-              title: "Quét thành công",
-              description: "Đã phát hiện mã vạch, nhấn tìm kiếm để chọn sản phẩm",
-            });
-          }, 3000);
-        })
-        .catch((error) => {
-          setIsScanning(false);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // Tạo video element để hiển thị camera
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        await video.play();
+
+        // Đọc barcode từ video bằng zxing
+        const codeReader = new BrowserMultiFormatReader();
+        let result = null;
+        try {
+          result = await codeReader.decodeOnceFromVideoElement(video);
+        } catch (err) {
+          // Không tìm thấy barcode
+        }
+
+        // Dừng camera
+        stream.getTracks().forEach(track => track.stop());
+        setIsScanning(false);
+
+        if (result && result.text) {
+          setBarcodeInput(result.text);
           toast({
-            title: "Lỗi camera",
-            description: "Không thể truy cập camera. Vui lòng nhập mã thủ công.",
+            title: "Quét thành công",
+            description: `Đã phát hiện mã vạch: ${result.text}, nhấn tìm kiếm để chọn sản phẩm`,
+          });
+        } else {
+          toast({
+            title: "Không tìm thấy mã vạch",
+            description: "Không phát hiện được mã vạch trong khung hình. Vui lòng thử lại hoặc nhập mã thủ công.",
             variant: "destructive",
           });
+        }
+      } catch (error) {
+        setIsScanning(false);
+        console.error('Lỗi truy cập camera hoặc quét mã vạch:', error);
+        let description = "Không thể truy cập camera hoặc quét mã vạch. Vui lòng nhập mã thủ công.";
+        if (error && error.name === 'NotAllowedError') {
+          description = "Bạn chưa cấp quyền truy cập camera. Hãy kiểm tra lại quyền trong trình duyệt.";
+        } else if (error && error.name === 'NotFoundError') {
+          description = "Thiết bị không có camera hoặc camera đang bị tắt.";
+        } else if (error && error.name === 'NotReadableError') {
+          description = "Camera đang được ứng dụng khác sử dụng hoặc bị lỗi phần cứng.";
+        } else if (error && error.name === 'OverconstrainedError') {
+          description = "Không tìm thấy camera phù hợp (ví dụ: camera sau). Hãy thử đổi thiết bị hoặc trình duyệt.";
+        } else if (error && error.message && error.message.includes('Only secure origins are allowed')) {
+          description = "Bạn cần truy cập ứng dụng qua HTTPS để sử dụng camera.";
+        }
+        toast({
+          title: "Lỗi camera",
+          description,
+          variant: "destructive",
         });
+      }
     } else {
       toast({
         title: "Không hỗ trợ",
-        description: "Thiết bị không hỗ trợ camera",
+        description: "Thiết bị hoặc trình duyệt không hỗ trợ camera. Hãy thử dùng Chrome/Safari mới nhất và đảm bảo truy cập qua HTTPS.",
         variant: "destructive",
       });
     }

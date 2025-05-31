@@ -181,7 +181,7 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
     </head>
     <body>
         <div class="header">
-            <div class="company-name">QuảnLýCửaHàng</div>
+            <div class="company-name">Ánh Tuyết Cosmetics</div>
             <div class="invoice-title">HÓA ĐƠN BÁN HÀNG</div>
             <div style="margin-top: 10px;">
                 <strong>Số: ${sale.ma_don_hang}</strong>

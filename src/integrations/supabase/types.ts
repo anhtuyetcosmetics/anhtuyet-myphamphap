@@ -309,6 +309,41 @@ export type Database = {
         }
         Relationships: []
       }
+      staff: {
+        Row: {
+          id: string
+          email: string
+          ten_nhan_vien: string
+          username: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          ten_nhan_vien: string
+          username: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          ten_nhan_vien?: string
+          username?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

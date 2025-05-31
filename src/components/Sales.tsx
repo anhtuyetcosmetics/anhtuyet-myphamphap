@@ -12,15 +12,21 @@ import {
   Calendar,
   DollarSign,
   Eye,
+  Printer,
   Loader2
 } from 'lucide-react';
 import { useSales } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
 import { CreateSaleDialog } from './CreateSaleDialog';
+import { SaleDetailDialog } from './SaleDetailDialog';
+import { PrintInvoice } from './PrintInvoice';
 
 export const Sales = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedSale, setSelectedSale] = useState(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [printingSale, setPrintingSale] = useState(null);
   
   const { data: sales, isLoading, error } = useSales();
   const { toast } = useToast();
@@ -41,6 +47,16 @@ export const Sales = () => {
       case 'cancelled': return 'Đã hủy';
       default: return 'Không xác định';
     }
+  };
+
+  const handleViewDetails = (sale) => {
+    setSelectedSale(sale);
+    setShowDetailDialog(true);
+  };
+
+  const handlePrintInvoice = (sale) => {
+    setPrintingSale(sale);
+    setTimeout(() => setPrintingSale(null), 1000);
   };
 
   if (isLoading) {
@@ -157,12 +173,22 @@ export const Sales = () => {
                 )}
                 
                 <div className="flex items-center space-x-2 pt-3 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleViewDetails(sale)}
+                  >
                     <Eye className="h-4 w-4 mr-1" />
                     Chi tiết
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <ShoppingCart className="h-4 w-4 mr-1" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handlePrintInvoice(sale)}
+                  >
+                    <Printer className="h-4 w-4 mr-1" />
                     In hóa đơn
                   </Button>
                 </div>
@@ -186,24 +212,19 @@ export const Sales = () => {
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog} 
       />
+
+      <SaleDetailDialog
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        sale={selectedSale}
+      />
+
+      {printingSale && (
+        <PrintInvoice
+          sale={printingSale}
+          onClose={() => setPrintingSale(null)}
+        />
+      )}
     </div>
   );
 };
-
-function getStatusColor(status: string | null) {
-  switch (status) {
-    case 'completed': return 'bg-green-100 text-green-800';
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'cancelled': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getStatusText(status: string | null) {
-  switch (status) {
-    case 'completed': return 'Hoàn thành';
-    case 'pending': return 'Đang xử lý';
-    case 'cancelled': return 'Đã hủy';
-    default: return 'Không xác định';
-  }
-}

@@ -31,10 +31,12 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex w-full">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="flex-1 p-6">
-        {renderContent()}
+      <main className="flex-1 lg:ml-0 pt-16 lg:pt-0">
+        <div className="h-full overflow-y-auto">
+          {renderContent()}
+        </div>
       </main>
     </div>
   );

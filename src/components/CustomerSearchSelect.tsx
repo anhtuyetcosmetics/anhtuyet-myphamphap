@@ -34,16 +34,18 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between"
+              className="w-full justify-between bg-white border-blue-200 hover:border-blue-400"
             >
-              {selectedCustomer 
-                ? `${selectedCustomer.ten_khach_hang} (${selectedCustomer.ma_khach_hang})`
-                : "Khách lẻ"
-              }
+              <span className="truncate">
+                {selectedCustomer 
+                  ? `${selectedCustomer.ten_khach_hang} (${selectedCustomer.ma_khach_hang})`
+                  : "Khách lẻ"
+                }
+              </span>
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
+          <PopoverContent className="w-full p-0 bg-white border-blue-200" align="start">
             <Command>
               <CommandInput placeholder="Tìm kiếm khách hàng..." />
               <CommandList>
@@ -54,6 +56,7 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
                       onCustomerSelect(null);
                       setOpen(false);
                     }}
+                    className="hover:bg-blue-50"
                   >
                     Khách lẻ
                   </CommandItem>
@@ -64,16 +67,17 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
                         onCustomerSelect(customer.id);
                         setOpen(false);
                       }}
+                      className="hover:bg-blue-50"
                     >
                       {customer.ten_khach_hang} ({customer.ma_khach_hang})
                     </CommandItem>
                   ))}
                 </CommandGroup>
               </CommandList>
-              <div className="p-2 border-t">
+              <div className="p-2 border-t border-blue-100">
                 <Button
                   size="sm"
-                  className="w-full"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
                   onClick={() => {
                     setAddCustomerOpen(true);
                     setOpen(false);

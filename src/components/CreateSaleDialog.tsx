@@ -12,10 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
-import { useCustomers } from '@/hooks/useCustomers';
-import { useProducts } from '@/hooks/useProducts';
 import { useAddSale, useAddSaleItem } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
+import { CustomerSearchSelect } from './CustomerSearchSelect';
+import { ProductSearchSelect } from './ProductSearchSelect';
 
 interface CreateSaleDialogProps {
   open: boolean;
@@ -33,15 +33,12 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const [maDoHang, setMaDonHang] = useState('');
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [ghiChu, setGhiChu] = useState('');
   const [trangThai, setTrangThai] = useState('pending');
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: customers } = useCustomers();
-  const { data: products } = useProducts();
   const addSaleMutation = useAddSale();
   const addSaleItemMutation = useAddSaleItem();
   const { toast } = useToast();
@@ -57,29 +54,17 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const updateSaleItem = (index: number, field: keyof SaleItem, value: any) => {
     const updated = [...saleItems];
     updated[index] = { ...updated[index], [field]: value };
-    
-    if (field === 'product_id') {
-      const product = products?.find(p => p.id === value);
-      if (product) {
-        updated[index].gia_ban = product.gia_ban || 0;
-        updated[index].product_name = product.ten_hang;
-      }
-    }
-    
     setSaleItems(updated);
+  };
+
+  const generateOrderCode = () => {
+    const now = new Date();
+    const timestamp = now.getTime().toString().slice(-8);
+    return `DH${timestamp}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!maDoHang.trim()) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập mã đơn hàng",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (saleItems.length === 0) {
       toast({
@@ -106,6 +91,8 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
     setIsSubmitting(true);
 
     try {
+      const maDoHang = generateOrderCode();
+      
       // Create sale
       const saleData = await addSaleMutation.mutateAsync({
         ma_don_hang: maDoHang,
@@ -129,11 +116,10 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
 
         toast({
           title: "Thành công",
-          description: "Đơn hàng đã được tạo thành công",
+          description: `Đơn hàng ${maDoHang} đã được tạo thành công`,
         });
 
         // Reset form
-        setMaDonHang('');
         setCustomerId(null);
         setGhiChu('');
         setTrangThai('pending');
@@ -163,47 +149,24 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ma_don_hang">Mã đơn hàng *</Label>
-              <Input
-                id="ma_don_hang"
-                value={maDoHang}
-                onChange={(e) => setMaDonHang(e.target.value)}
-                placeholder="Nhập mã đơn hàng"
-                required
-              />
-            </div>
+            <CustomerSearchSelect
+              selectedCustomerId={customerId}
+              onCustomerSelect={setCustomerId}
+            />
             
             <div className="space-y-2">
-              <Label htmlFor="customer">Khách hàng</Label>
-              <Select value={customerId?.toString() || 'walk-in'} onValueChange={(value) => setCustomerId(value === 'walk-in' ? null : parseInt(value))}>
+              <Label htmlFor="trang_thai">Trạng thái</Label>
+              <Select value={trangThai} onValueChange={setTrangThai}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn khách hàng" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="walk-in">Khách lẻ</SelectItem>
-                  {customers?.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id.toString()}>
-                      {customer.ten_khach_hang} ({customer.ma_khach_hang})
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="pending">Đang xử lý</SelectItem>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                  <SelectItem value="cancelled">Đã hủy</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="trang_thai">Trạng thái</Label>
-            <Select value={trangThai} onValueChange={setTrangThai}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Đang xử lý</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-4">
@@ -218,25 +181,11 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
             <div className="space-y-3">
               {saleItems.map((item, index) => (
                 <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg">
-                  <div>
-                    <Label>Sản phẩm</Label>
-                    <Select
-                      value={item.product_id?.toString() || 'no-product'}
-                      onValueChange={(value) => updateSaleItem(index, 'product_id', value === 'no-product' ? 0 : parseInt(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn sản phẩm" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-product">Chọn sản phẩm</SelectItem>
-                        {products?.map((product) => (
-                          <SelectItem key={product.id} value={product.id.toString()}>
-                            {product.ten_hang}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <ProductSearchSelect
+                    selectedProductId={item.product_id}
+                    onProductSelect={(productId) => updateSaleItem(index, 'product_id', productId)}
+                    placeholder="Chọn sản phẩm"
+                  />
                   
                   <div>
                     <Label>Số lượng</Label>

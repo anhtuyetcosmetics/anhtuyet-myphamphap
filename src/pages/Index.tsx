@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
@@ -7,6 +6,8 @@ import { Inventory } from '@/components/Inventory';
 import { Sales } from '@/components/Sales';
 import { Customers } from '@/components/Customers';
 import { Analytics } from '@/components/Analytics';
+import { UserManagement } from '@/components/UserManagement';
+import { ProfileForm } from '@/components/ProfileForm';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -25,6 +26,10 @@ const Index = () => {
         return <Customers />;
       case 'analytics':
         return <Analytics />;
+      case 'users':
+        return <UserManagement />;
+      case 'profile':
+        return <ProfileForm />;
       default:
         return <Dashboard />;
     }

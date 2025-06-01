@@ -12,9 +12,12 @@ import {
   User,
   Menu,
   X,
+  UserIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SidebarProps {
   activeTab: string;
@@ -25,6 +28,22 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [openMobile, setOpenMobile] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (user) {
+      // Lấy role từ user metadata hoặc từ bảng staff nếu cần
+      (async () => {
+        const { data } = await supabase
+          .from('staff')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        setIsAdmin(data?.role === 'admin');
+      })();
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -46,6 +65,8 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'sales', label: 'Bán hàng', icon: ShoppingCart },
     { id: 'customers', label: 'Khách hàng', icon: Users },
     { id: 'analytics', label: 'Báo cáo', icon: BarChart3 },
+    ...(isAdmin ? [{ id: 'users', label: 'Quản lý users', icon: User }] : []),
+    { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserIcon },
   ];
 
   // Sidebar content as a function for reuse
@@ -53,7 +74,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     <div className="flex flex-col h-full">
       {/* Logo and Title */}
       <div className="p-6">
-        <h1 className="text-xl font-bold text-sidebar-primary">My Pham Phap</h1>
+        <h1 className="text-xl font-bold text-sidebar-primary">Ánh Tuyết Cosmetics</h1>
         <p className="text-sm text-sidebar-foreground">Quản lý cửa hàng</p>
       </div>
       <Separator className="bg-sidebar-border" />
@@ -90,7 +111,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 }`}
                 onClick={() => {
                   setActiveTab(item.id);
-                  setOpenMobile(false); // Đóng sidebar khi chọn menu trên mobile
+                  setOpenMobile(false);
                 }}
               >
                 <Icon className="mr-2 h-4 w-4" />

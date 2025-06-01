@@ -1,12 +1,12 @@
 import React from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { RegisterForm } from '@/components/auth/RegisterForm';
+// import { RegisterForm } from '@/components/auth/RegisterForm';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { Navigate } from 'react-router-dom';
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = React.useState(true);
+  // const [isLogin, setIsLogin] = React.useState(true);
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -24,18 +24,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="space-y-4">
-        {isLogin ? <LoginForm /> : <RegisterForm />}
-        <div className="text-center">
-          <Button
-            variant="link"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-gray-600"
-          >
-            {isLogin
-              ? "Chưa có tài khoản? Đăng ký ngay"
-              : "Đã có tài khoản? Đăng nhập"}
-          </Button>
-        </div>
+        <LoginForm />
+        {/* Đã ẩn nút chuyển sang đăng ký và form đăng ký */}
       </div>
     </div>
   );

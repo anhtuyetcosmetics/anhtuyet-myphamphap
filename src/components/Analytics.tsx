@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   BarChart, 
@@ -41,14 +40,20 @@ export const Analytics = () => {
 
   const isLoading = salesLoading || productsLoading;
 
-  // Tính toán thống kê thực từ dữ liệu
-  const totalRevenue = sales?.reduce((sum, sale) => sum + sale.tong_tien, 0) || 0;
+  // Lọc bỏ các đơn hàng đã hủy
+  const activeSales = useMemo(() => 
+    sales?.filter(sale => sale.trang_thai !== 'cancelled') || [],
+    [sales]
+  );
+
+  // Tính toán thống kê thực từ dữ liệu (chỉ tính các đơn hàng chưa hủy)
+  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.tong_tien, 0);
   const totalProfit = Math.round(totalRevenue * 0.3); // Giả sử lợi nhuận 30%
-  const totalOrders = sales?.length || 0;
+  const totalOrders = activeSales.length;
   const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  // Dữ liệu doanh số và lợi nhuận theo tháng
-  const monthlyData = sales?.reduce((acc, sale) => {
+  // Dữ liệu doanh số và lợi nhuận theo tháng (chỉ tính các đơn hàng chưa hủy)
+  const monthlyData = activeSales.reduce((acc, sale) => {
     const date = new Date(sale.ngay_ban);
     const month = `T${date.getMonth() + 1}`;
     const existing = acc.find(item => item.name === month);
@@ -62,7 +67,7 @@ export const Analytics = () => {
       acc.push({ name: month, sales: revenue, profit });
     }
     return acc;
-  }, [] as Array<{ name: string; sales: number; profit: number }>) || [];
+  }, [] as Array<{ name: string; sales: number; profit: number }>);
 
   // Dữ liệu danh mục sản phẩm từ database
   const categoryData = products?.reduce((acc, product) => {
@@ -83,8 +88,8 @@ export const Analytics = () => {
     return acc;
   }, [] as Array<{ name: string; value: number; color: string }>) || [];
 
-  // Top sản phẩm bán chạy
-  const topProducts = sales?.reduce((acc, sale) => {
+  // Top sản phẩm bán chạy (chỉ tính các đơn hàng chưa hủy)
+  const topProducts = activeSales.reduce((acc, sale) => {
     sale.sale_items?.forEach(item => {
       if (item.products) {
         const existing = acc.find(p => p.name === item.products.ten_hang);

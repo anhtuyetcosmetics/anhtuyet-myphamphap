@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,11 +7,14 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Plus, Search } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { AddCustomerDialog } from './AddCustomerDialog';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface CustomerSearchSelectProps {
   selectedCustomerId: number | null;
   onCustomerSelect: (customerId: number | null) => void;
 }
+
+const ITEMS_PER_PAGE = 50; // Số lượng khách hàng hiển thị tối đa
 
 export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
   selectedCustomerId,
@@ -20,9 +22,33 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
-  const { data: customers } = useCustomers();
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const { data: customerResult } = useCustomers();
+  const customers = customerResult?.data || [];
 
-  const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
+  const selectedCustomer = useMemo(() => 
+    customers.find(c => c.id === selectedCustomerId),
+    [customers, selectedCustomerId]
+  );
+
+  const filteredCustomers = useMemo(() => {
+    if (!debouncedSearch) {
+      return customers.slice(0, ITEMS_PER_PAGE);
+    }
+    
+    const searchLower = debouncedSearch.toLowerCase();
+    return customers
+      .filter(customer => 
+        customer.ten_khach_hang.toLowerCase().includes(searchLower) ||
+        customer.ma_khach_hang.toLowerCase().includes(searchLower)
+      )
+      .slice(0, ITEMS_PER_PAGE);
+  }, [customers, debouncedSearch]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
 
   return (
     <>
@@ -46,9 +72,13 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0 bg-white border-blue-200" align="start">
-            <Command>
-              <CommandInput placeholder="Tìm kiếm khách hàng..." />
-              <CommandList>
+            <Command shouldFilter={false}>
+              <CommandInput 
+                placeholder="Tìm kiếm khách hàng..." 
+                value={searchQuery}
+                onValueChange={handleSearch}
+              />
+              <CommandList className="max-h-[300px] overflow-y-auto">
                 <CommandEmpty>Không tìm thấy khách hàng</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
@@ -60,7 +90,7 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
                   >
                     Khách lẻ
                   </CommandItem>
-                  {customers?.map((customer) => (
+                  {filteredCustomers.map((customer) => (
                     <CommandItem
                       key={customer.id}
                       onSelect={() => {

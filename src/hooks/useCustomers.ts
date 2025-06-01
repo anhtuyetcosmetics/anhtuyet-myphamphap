@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,20 +14,49 @@ export interface Customer {
 
 export const useCustomers = () => {
   return useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers-list'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('ngay_tao', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching customers:', error);
-        throw error;
+      let allCustomers: Customer[] = [];
+      let lastId = 0;
+      const pageSize = 2000; // Tăng lên 2000 bản ghi mỗi lần
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error, count } = await supabase
+            .from('customers')
+            .select('*', { count: 'exact' })
+            .order('id')
+            .gt('id', lastId)
+            .limit(pageSize);
+
+        if (error) {
+          console.error('Error fetching customers:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        allCustomers = [...allCustomers, ...data];
+        lastId = data[data.length - 1].id;
+
+        console.log(`Fetched ${data.length} customers, total so far: ${allCustomers.length}`);
       }
-      
-      return data as Customer[];
+
+      console.log('Total customers fetched:', allCustomers.length);
+
+      // Sắp xếp lại theo tên khách hàng
+      allCustomers.sort((a, b) => a.ten_khach_hang.localeCompare(b.ten_khach_hang));
+
+      return {
+        data: allCustomers as Customer[],
+        count: allCustomers.length
+      };
     },
+    staleTime: 5 * 60 * 1000, // 5 phút
+    gcTime: 30 * 60 * 1000, // 30 phút
   });
 };
 
@@ -50,7 +78,7 @@ export const useAddCustomer = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers-list'] });
     },
   });
 };
@@ -74,7 +102,7 @@ export const useUpdateCustomer = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers-list'] });
     },
   });
 };
@@ -95,7 +123,55 @@ export const useDeleteCustomer = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers-list'] });
     },
+  });
+};
+
+export const useCustomersList = () => {
+  return useQuery({
+    queryKey: ['customers-list'],
+    queryFn: async () => {
+      let allCustomers: Customer[] = [];
+      let lastId = 0;
+      const pageSize = 2000; // Tăng lên 2000 bản ghi mỗi lần
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error, count } = await supabase
+          .from('customers')
+          .select('*', { count: 'exact' })
+          .order('id')
+          .gt('id', lastId)
+          .limit(pageSize);
+
+        if (error) {
+          console.error('Error fetching customers:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        allCustomers = [...allCustomers, ...data];
+        lastId = data[data.length - 1].id;
+
+        console.log(`Fetched ${data.length} customers, total so far: ${allCustomers.length}`);
+      }
+
+      console.log('Total customers fetched:', allCustomers.length);
+      
+      // Sắp xếp lại theo tên khách hàng
+      allCustomers.sort((a, b) => a.ten_khach_hang.localeCompare(b.ten_khach_hang));
+      
+      return { 
+        data: allCustomers as Customer[], 
+        count: allCustomers.length 
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 phút
+    gcTime: 30 * 60 * 1000, // 30 phút
   });
 };

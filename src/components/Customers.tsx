@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,19 +12,25 @@ import {
   Mail,
   Phone,
   MapPin,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useCustomers, useDeleteCustomer } from '@/hooks/useCustomers';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   
-  const { data: customers, isLoading, error } = useCustomers();
+  const { data: customerResult, isLoading, error } = useCustomers();
+  const customers = customerResult?.data || [];
   const deleteCustomer = useDeleteCustomer();
   const { toast } = useToast();
 
@@ -61,10 +66,30 @@ export const Customers = () => {
     );
   }
 
-  const filteredCustomers = customers?.filter(customer =>
+  const filteredCustomers = customers.filter(customer =>
     customer.ten_khach_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.ma_khach_hang.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
 
   return (
     <div className="space-y-6">
@@ -96,7 +121,7 @@ export const Customers = () => {
 
       {/* Customer Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCustomers.map((customer) => (
+        {currentCustomers.map((customer) => (
           <Card key={customer.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
@@ -162,6 +187,88 @@ export const Customers = () => {
           </Card>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredCustomers.length > 0 && (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Trang trước
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Trang sau
+            </Button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-700">
+                Hiển thị <span className="font-medium">{startIndex + 1}</span> đến{' '}
+                <span className="font-medium">{Math.min(endIndex, filteredCustomers.length)}</span> của{' '}
+                <span className="font-medium">{filteredCustomers.length}</span> khách hàng
+              </p>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="12">12 / trang</SelectItem>
+                  <SelectItem value="24">24 / trang</SelectItem>
+                  <SelectItem value="36">36 / trang</SelectItem>
+                  <SelectItem value="48">48 / trang</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-1">
+                <Select
+                  value={currentPage.toString()}
+                  onValueChange={(value) => handlePageChange(Number(value))}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue>
+                      Trang {currentPage} / {totalPages}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <SelectItem key={page} value={page.toString()}>
+                        Trang {page}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {filteredCustomers.length === 0 && (
         <Card>

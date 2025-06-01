@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +7,10 @@ export interface Sale {
   customer_id: number | null;
   ngay_ban: string | null;
   tong_tien: number;
+  thanh_tien: number;
+  giam_gia_loai: 'percentage' | 'fixed' | null;
+  giam_gia_gia_tri: number | null;
+  giam_gia_so_tien: number | null;
   trang_thai: string | null;
   ghi_chu: string | null;
 }
@@ -64,7 +67,7 @@ export const useAddSale = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (sale: Omit<Sale, 'id' | 'ngay_ban' | 'tong_tien'>) => {
+    mutationFn: async (sale: Omit<Sale, 'id' | 'ngay_ban'>) => {
       const { data, error } = await supabase
         .from('sales')
         .insert([sale])

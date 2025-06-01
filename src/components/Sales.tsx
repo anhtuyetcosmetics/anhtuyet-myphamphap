@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,8 @@ import {
   DollarSign,
   Eye,
   Printer,
-  Loader2
+  Loader2,
+  Percent
 } from 'lucide-react';
 import { useSales } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
@@ -57,6 +57,32 @@ export const Sales = () => {
   const handlePrintInvoice = (sale) => {
     setPrintingSale(sale);
     setTimeout(() => setPrintingSale(null), 1000);
+  };
+
+  const renderSaleAmount = (sale) => {
+    const hasDiscount = sale.giam_gia_loai && sale.giam_gia_gia_tri && sale.giam_gia_so_tien;
+    
+    return (
+      <div className="flex flex-col items-end">
+        {hasDiscount && (
+          <div className="flex items-center space-x-1 text-sm text-red-600">
+            <Percent className="h-3 w-3" />
+            <span>
+              {sale.giam_gia_loai === 'percentage' 
+                ? `${sale.giam_gia_gia_tri}%`
+                : `${sale.giam_gia_gia_tri.toLocaleString('vi-VN')} ₫`}
+              {' '}(-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫)
+            </span>
+          </div>
+        )}
+        <div className="flex items-center space-x-2">
+          <DollarSign className="h-4 w-4 text-gray-500" />
+          <span className="text-lg font-bold text-gray-900">
+            {sale.thanh_tien.toLocaleString('vi-VN')} ₫
+          </span>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -139,12 +165,7 @@ export const Sales = () => {
                       {sale.ngay_ban ? new Date(sale.ngay_ban).toLocaleDateString('vi-VN') : 'N/A'}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-gray-500" />
-                    <span className="text-lg font-bold text-gray-900">
-                      {sale.tong_tien.toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
+                  {renderSaleAmount(sale)}
                 </div>
 
                 {sale.sale_items && sale.sale_items.length > 0 && (

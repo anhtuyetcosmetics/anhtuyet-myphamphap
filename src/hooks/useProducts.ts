@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,17 +18,44 @@ export const useProducts = () => {
   return useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
-      
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
+      let allProducts: Product[] = [];
+      let lastId = 0;
+      const pageSize = 2000; // Tăng lên 2000 bản ghi mỗi lần
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error, count } = await supabase
+          .from('products')
+          .select('*', { count: 'exact' })
+          .order('id')
+          .gt('id', lastId)
+          .limit(pageSize);
+
+        if (error) {
+          console.error('Error fetching products:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        allProducts = [...allProducts, ...data];
+        lastId = data[data.length - 1].id;
+
+        console.log(`Fetched ${data.length} products, total so far: ${allProducts.length}`);
       }
+
+      console.log('Total products fetched:', allProducts.length);
       
-      return data as Product[];
+      // Sắp xếp lại theo tên sản phẩm
+      allProducts.sort((a, b) => a.ten_hang.localeCompare(b.ten_hang));
+      
+      return allProducts as Product[];
     },
+    staleTime: 5 * 60 * 1000, // 5 phút
+    gcTime: 30 * 60 * 1000, // 30 phút
   });
 };
 

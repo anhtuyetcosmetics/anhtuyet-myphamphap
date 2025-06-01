@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,15 @@ import { Search, Barcode, Camera } from 'lucide-react';
 import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { BrowserMultiFormatReader } from '@zxing/browser';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface ProductSearchSelectProps {
   selectedProductId: number;
   onProductSelect: (productId: number) => void;
   placeholder?: string;
 }
+
+const ITEMS_PER_PAGE = 50; // Số lượng sản phẩm hiển thị tối đa
 
 export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
   selectedProductId,
@@ -23,15 +26,40 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
   const [open, setOpen] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const { data: products } = useProducts();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
-  const selectedProduct = products?.find(p => p.id === selectedProductId);
+  const selectedProduct = useMemo(() => 
+    products?.find(p => p.id === selectedProductId),
+    [products, selectedProductId]
+  );
 
-  const handleBarcodeSearch = () => {
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    if (!debouncedSearch) {
+      return products.slice(0, ITEMS_PER_PAGE);
+    }
+    
+    const searchLower = debouncedSearch.toLowerCase();
+    return products
+      .filter(product => 
+        product.ten_hang.toLowerCase().includes(searchLower) ||
+        product.ma_hang.toLowerCase().includes(searchLower)
+      )
+      .slice(0, ITEMS_PER_PAGE);
+  }, [products, debouncedSearch]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
+
+  const handleBarcodeSearch = useCallback(() => {
     if (barcodeInput.trim()) {
       const product = products?.find(p => 
         p.ma_hang.toLowerCase().includes(barcodeInput.toLowerCase()) ||
@@ -53,14 +81,14 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
         });
       }
     }
-  };
+  }, [barcodeInput, products, onProductSelect, toast]);
 
-  const handleBarcodeKeyPress = (e: React.KeyboardEvent) => {
+  const handleBarcodeKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleBarcodeSearch();
     }
-  };
+  }, [handleBarcodeSearch]);
 
   const handleCameraCapture = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -145,6 +173,8 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
         setOpen(v);
         if (!v) {
           setIsScanning(false);
+          setSearchQuery('');
+          setBarcodeInput('');
         }
       }}>
         <PopoverTrigger asChild>
@@ -161,8 +191,13 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0 bg-white border-blue-200" align="start">
-          <Command>
-            <CommandInput placeholder="Tìm kiếm sản phẩm..." className="border-none" />
+          <Command shouldFilter={false}>
+            <CommandInput 
+              placeholder="Tìm kiếm sản phẩm..." 
+              value={searchQuery}
+              onValueChange={handleSearch}
+              className="border-none" 
+            />
             <div className="p-3 border-b border-gray-100">
               <div className="space-y-2">
                 <div className="flex gap-2">
@@ -206,10 +241,10 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
                 )}
               </div>
             </div>
-            <CommandList className="max-h-60">
+            <CommandList className="max-h-[300px] overflow-y-auto">
               <CommandEmpty>Không tìm thấy sản phẩm</CommandEmpty>
               <CommandGroup>
-                {products?.map((product) => (
+                {filteredProducts.map((product) => (
                   <CommandItem
                     key={product.id}
                     onSelect={() => {

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   DollarSign, 
@@ -19,19 +18,25 @@ import { useInventory } from '@/hooks/useInventory';
 export const Dashboard = () => {
   const { data: sales, isLoading: salesLoading } = useSales();
   const { data: products, isLoading: productsLoading } = useProducts();
-  const { data: customers, isLoading: customersLoading } = useCustomers();
+  const { data: customerResult, isLoading: customersLoading } = useCustomers();
   const { data: inventory, isLoading: inventoryLoading } = useInventory();
 
   const isLoading = salesLoading || productsLoading || customersLoading || inventoryLoading;
 
-  // Tính toán thống kê thực
-  const totalRevenue = sales?.reduce((sum, sale) => sum + sale.tong_tien, 0) || 0;
+  // Lọc bỏ các đơn hàng đã hủy
+  const activeSales = useMemo(() => 
+    sales?.filter(sale => sale.trang_thai !== 'cancelled') || [],
+    [sales]
+  );
+
+  // Tính toán thống kê thực (chỉ tính các đơn hàng chưa hủy)
+  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.tong_tien, 0);
   const totalProducts = products?.length || 0;
-  const totalCustomers = customers?.length || 0;
+  const totalCustomers = customerResult?.data?.length || 0;
   const lowStockItems = inventory?.filter(item => item.so_luong_hien_tai < 10).length || 0;
 
-  // Tạo dữ liệu biểu đồ từ doanh số thực
-  const salesData = sales?.reduce((acc, sale) => {
+  // Tạo dữ liệu biểu đồ từ doanh số thực (chỉ tính các đơn hàng chưa hủy)
+  const salesData = activeSales.reduce((acc, sale) => {
     const date = new Date(sale.ngay_ban);
     const dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()];
     const existing = acc.find(item => item.name === dayName);
@@ -41,10 +46,10 @@ export const Dashboard = () => {
       acc.push({ name: dayName, sales: sale.tong_tien });
     }
     return acc;
-  }, [] as Array<{ name: string; sales: number }>) || [];
+  }, [] as Array<{ name: string; sales: number }>);
 
-  // Dữ liệu xu hướng doanh thu theo tháng
-  const revenueData = sales?.reduce((acc, sale) => {
+  // Dữ liệu xu hướng doanh thu theo tháng (chỉ tính các đơn hàng chưa hủy)
+  const revenueData = activeSales.reduce((acc, sale) => {
     const date = new Date(sale.ngay_ban);
     const month = `T${date.getMonth() + 1}`;
     const existing = acc.find(item => item.month === month);
@@ -54,15 +59,15 @@ export const Dashboard = () => {
       acc.push({ month, revenue: sale.tong_tien });
     }
     return acc;
-  }, [] as Array<{ month: string; revenue: number }>) || [];
+  }, [] as Array<{ month: string; revenue: number }>);
 
-  // Hoạt động gần đây từ dữ liệu thực
-  const recentActivities = sales?.slice(0, 4).map(sale => ({
+  // Hoạt động gần đây từ dữ liệu thực (chỉ tính các đơn hàng chưa hủy)
+  const recentActivities = activeSales.slice(0, 4).map(sale => ({
     action: `Hoàn thành đơn hàng #${sale.ma_don_hang}`,
     amount: `${sale.tong_tien.toLocaleString('vi-VN')} ₫`,
     time: `${Math.floor((Date.now() - new Date(sale.ngay_ban).getTime()) / (1000 * 60))} phút trước`,
     icon: ShoppingBag
-  })) || [];
+  }));
 
   if (isLoading) {
     return (

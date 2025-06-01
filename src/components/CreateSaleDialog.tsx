@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -11,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Percent, DollarSign } from 'lucide-react';
 import { useAddSale, useAddSaleItem } from '@/hooks/useSales';
+import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSearchSelect } from './CustomerSearchSelect';
 import { ProductSearchSelect } from './ProductSearchSelect';
@@ -29,6 +29,11 @@ interface SaleItem {
   product_name?: string;
 }
 
+interface Discount {
+  type: 'percentage' | 'fixed';
+  value: number;
+}
+
 export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   open,
   onOpenChange,
@@ -38,9 +43,11 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const [trangThai, setTrangThai] = useState('pending');
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discount, setDiscount] = useState<Discount>({ type: 'percentage', value: 0 });
 
   const addSaleMutation = useAddSale();
   const addSaleItemMutation = useAddSaleItem();
+  const { data: products } = useProducts();
   const { toast } = useToast();
 
   const addSaleItem = () => {
@@ -53,7 +60,17 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
 
   const updateSaleItem = (index: number, field: keyof SaleItem, value: any) => {
     const updated = [...saleItems];
-    updated[index] = { ...updated[index], [field]: value };
+    if (field === 'product_id') {
+      const selectedProduct = products?.find(p => p.id === value);
+      updated[index] = { 
+        ...updated[index], 
+        [field]: value,
+        gia_ban: selectedProduct?.gia_ban || 0,
+        product_name: selectedProduct?.ten_hang
+      };
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
+    }
     setSaleItems(updated);
   };
 
@@ -61,6 +78,37 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
     const now = new Date();
     const timestamp = now.getTime().toString().slice(-8);
     return `DH${timestamp}`;
+  };
+
+  const calculateSubtotal = () => {
+    return saleItems.reduce((sum, item) => sum + (item.so_luong * item.gia_ban), 0);
+  };
+
+  const calculateDiscountAmount = () => {
+    const subtotal = calculateSubtotal();
+    if (discount.type === 'percentage') {
+      return (subtotal * discount.value) / 100;
+    }
+    return discount.value;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discountAmount = calculateDiscountAmount();
+    return Math.max(0, subtotal - discountAmount);
+  };
+
+  const handleDiscountTypeChange = (type: 'percentage' | 'fixed') => {
+    setDiscount({ type, value: 0 });
+  };
+
+  const handleDiscountValueChange = (value: string) => {
+    const numValue = parseFloat(value) || 0;
+    if (discount.type === 'percentage') {
+      setDiscount({ ...discount, value: Math.min(100, Math.max(0, numValue)) });
+    } else {
+      setDiscount({ ...discount, value: Math.max(0, numValue) });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,6 +140,9 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
 
     try {
       const maDoHang = generateOrderCode();
+      const subtotal = calculateSubtotal();
+      const discountAmount = calculateDiscountAmount();
+      const total = calculateTotal();
       
       // Create sale
       const saleData = await addSaleMutation.mutateAsync({
@@ -99,6 +150,11 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         customer_id: customerId,
         trang_thai: trangThai,
         ghi_chu: ghiChu || null,
+        tong_tien: subtotal,
+        thanh_tien: total,
+        giam_gia_loai: discount.value > 0 ? discount.type : null,
+        giam_gia_gia_tri: discount.value > 0 ? discount.value : null,
+        giam_gia_so_tien: discount.value > 0 ? discountAmount : null,
       });
 
       if (saleData && saleData[0]) {
@@ -124,6 +180,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         setGhiChu('');
         setTrangThai('pending');
         setSaleItems([]);
+        setDiscount({ type: 'percentage', value: 0 });
         onOpenChange(false);
       }
     } catch (error) {
@@ -138,7 +195,9 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
     }
   };
 
-  const totalAmount = saleItems.reduce((sum, item) => sum + (item.so_luong * item.gia_ban), 0);
+  const subtotal = calculateSubtotal();
+  const discountAmount = calculateDiscountAmount();
+  const total = calculateTotal();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,10 +288,63 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
             </div>
 
             {saleItems.length > 0 && (
-              <div className="text-right">
-                <Label className="text-lg font-semibold">
-                  Tổng tiền: {totalAmount.toLocaleString('vi-VN')} ₫
-                </Label>
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-base">Tạm tính:</Label>
+                  <span className="text-lg">{subtotal.toLocaleString('vi-VN')} ₫</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <Label>Giảm giá</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={discount.type}
+                        onValueChange={(value: 'percentage' | 'fixed') => handleDiscountTypeChange(value)}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">
+                            <div className="flex items-center">
+                              <Percent className="h-4 w-4 mr-2" />
+                              Phần trăm
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="fixed">
+                            <div className="flex items-center">
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              Số tiền
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={discount.type === 'percentage' ? 100 : undefined}
+                        value={discount.value}
+                        onChange={(e) => handleDiscountValueChange(e.target.value)}
+                        className="flex-1"
+                        placeholder={discount.type === 'percentage' ? 'Nhập % giảm giá' : 'Nhập số tiền giảm'}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <Label>Số tiền giảm:</Label>
+                    <div className="text-lg font-medium text-red-600">
+                      -{discountAmount.toLocaleString('vi-VN')} ₫
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-t pt-3">
+                  <Label className="text-lg font-semibold">Tổng tiền:</Label>
+                  <span className="text-xl font-bold text-blue-600">
+                    {total.toLocaleString('vi-VN')} ₫
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -12,7 +12,8 @@ import {
   Calendar, 
   DollarSign, 
   Package,
-  FileText
+  FileText,
+  Percent
 } from 'lucide-react';
 import { SaleWithDetails } from '@/hooks/useSales';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,6 +75,25 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
     }
   };
 
+  const renderDiscountInfo = () => {
+    if (!sale.giam_gia_loai || !sale.giam_gia_gia_tri || !sale.giam_gia_so_tien) {
+      return null;
+    }
+
+    return (
+      <div className="flex items-center space-x-2">
+        <Percent className="h-4 w-4 text-gray-500" />
+        <span className="text-sm text-gray-600">Giảm giá:</span>
+        <span className="font-medium text-red-600">
+          {sale.giam_gia_loai === 'percentage' 
+            ? `${sale.giam_gia_gia_tri}%`
+            : `${sale.giam_gia_gia_tri.toLocaleString('vi-VN')} ₫`}
+          {' '}(-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫)
+        </span>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -108,9 +128,17 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Tổng tiền:</span>
-                  <span className="font-bold text-lg text-blue-600">
+                  <span className="text-sm text-gray-600">Tạm tính:</span>
+                  <span className="font-medium">
                     {sale.tong_tien.toLocaleString('vi-VN')} ₫
+                  </span>
+                </div>
+                {renderDiscountInfo()}
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Thành tiền:</span>
+                  <span className="font-bold text-lg text-blue-600">
+                    {sale.thanh_tien.toLocaleString('vi-VN')} ₫
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">

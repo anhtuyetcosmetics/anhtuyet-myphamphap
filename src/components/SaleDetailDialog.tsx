@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +15,8 @@ import {
   FileText
 } from 'lucide-react';
 import { SaleWithDetails } from '@/hooks/useSales';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SaleDetailDialogProps {
   open: boolean;
@@ -28,6 +29,31 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
   onOpenChange,
   sale,
 }) => {
+  const { toast } = useToast();
+  const [updating, setUpdating] = useState(false);
+  const [status, setStatus] = useState(sale?.trang_thai || 'pending');
+
+  React.useEffect(() => {
+    setStatus(sale?.trang_thai || 'pending');
+  }, [sale]);
+
+  const handleUpdateStatus = async () => {
+    if (!sale) return;
+    setUpdating(true);
+    const { error } = await supabase
+      .from('sales')
+      .update({ trang_thai: status })
+      .eq('id', sale.id);
+    setUpdating(false);
+    if (error) {
+      toast({ title: 'Lỗi', description: 'Không thể cập nhật trạng thái', variant: 'destructive' });
+    } else {
+      toast({ title: 'Thành công', description: 'Đã cập nhật trạng thái đơn hàng.' });
+      // Cập nhật trạng thái trong UI (nếu cần, có thể gọi lại fetch hoặc reload)
+      if (sale) sale.trang_thai = status;
+    }
+  };
+
   if (!sale) return null;
 
   const getStatusColor = (status: string | null) => {
@@ -89,8 +115,26 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Trạng thái:</span>
-                  <Badge className={getStatusColor(sale.trang_thai)}>
-                    {getStatusText(sale.trang_thai)}
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={status}
+                    onChange={e => setStatus(e.target.value)}
+                    disabled={updating}
+                  >
+                    <option value="pending">Đang xử lý</option>
+                    <option value="completed">Hoàn thành</option>
+                    <option value="cancelled">Đã hủy</option>
+                  </select>
+                  <button
+                    className="ml-2 px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-60"
+                    onClick={handleUpdateStatus}
+                    disabled={updating || status === sale.trang_thai}
+                    type="button"
+                  >
+                    {updating ? 'Đang lưu...' : 'Lưu'}
+                  </button>
+                  <Badge className={getStatusColor(status)}>
+                    {getStatusText(status)}
                   </Badge>
                 </div>
               </div>

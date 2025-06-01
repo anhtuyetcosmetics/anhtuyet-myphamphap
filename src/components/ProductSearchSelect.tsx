@@ -26,6 +26,8 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
   const { data: products } = useProducts();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
   const selectedProduct = products?.find(p => p.id === selectedProductId);
 
@@ -65,24 +67,24 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
       setIsScanning(true);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        // Tạo video element để hiển thị camera
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        await video.play();
-
+        setMediaStream(stream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.setAttribute('playsinline', 'true');
+          await videoRef.current.play();
+        }
         // Đọc barcode từ video bằng zxing
         const codeReader = new BrowserMultiFormatReader();
         let result = null;
         try {
-          result = await codeReader.decodeOnceFromVideoElement(video);
+          result = await codeReader.decodeOnceFromVideoElement(videoRef.current!);
         } catch (err) {
           // Không tìm thấy barcode
         }
-
         // Dừng camera
         stream.getTracks().forEach(track => track.stop());
+        setMediaStream(null);
         setIsScanning(false);
-
         if (result && result.text) {
           setBarcodeInput(result.text);
           toast({
@@ -98,6 +100,7 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
         }
       } catch (error) {
         setIsScanning(false);
+        setMediaStream(null);
         console.error('Lỗi truy cập camera hoặc quét mã vạch:', error);
         let description = "Không thể truy cập camera hoặc quét mã vạch. Vui lòng nhập mã thủ công.";
         if (error && error.name === 'NotAllowedError') {
@@ -126,10 +129,24 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
     }
   };
 
+  // Dừng camera khi đóng popover hoặc khi không quét nữa
+  React.useEffect(() => {
+    if (!isScanning && mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setMediaStream(null);
+    }
+    // eslint-disable-next-line
+  }, [isScanning]);
+
   return (
     <div className="space-y-2">
       <Label>Sản phẩm</Label>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) {
+          setIsScanning(false);
+        }
+      }}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -176,6 +193,17 @@ export const ProductSearchSelect: React.FC<ProductSearchSelectProps> = ({
                   <Camera className="h-4 w-4 mr-2" />
                   {isScanning ? 'Đang quét...' : 'Quét bằng camera'}
                 </Button>
+                {isScanning && (
+                  <div className="w-full flex justify-center mt-2">
+                    <video
+                      ref={videoRef}
+                      style={{ width: '100%', maxWidth: 320, height: 240, background: '#000' }}
+                      autoPlay
+                      muted
+                      playsInline
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <CommandList className="max-h-60">

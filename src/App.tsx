@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PWAStatus } from "@/components/PWAStatus";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -22,6 +23,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <PWAStatus />
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />

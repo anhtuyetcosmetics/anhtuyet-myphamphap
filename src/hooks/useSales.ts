@@ -28,6 +28,7 @@ export interface SaleWithDetails extends Sale {
   customers?: {
     ten_khach_hang: string;
     ma_khach_hang: string;
+    dia_chi: string | null;
   };
   sale_items?: Array<SaleItem & {
     products?: {

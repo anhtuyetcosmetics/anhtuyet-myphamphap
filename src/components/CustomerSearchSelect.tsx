@@ -41,7 +41,7 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
     return customers
       .filter(customer => 
         customer.ten_khach_hang.toLowerCase().includes(searchLower) ||
-        customer.ma_khach_hang.toLowerCase().includes(searchLower)
+        (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
       )
       .slice(0, ITEMS_PER_PAGE);
   }, [customers, debouncedSearch]);
@@ -64,7 +64,7 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
             >
               <span className="truncate">
                 {selectedCustomer 
-                  ? `${selectedCustomer.ten_khach_hang} (${selectedCustomer.ma_khach_hang})`
+                  ? `${selectedCustomer.ten_khach_hang}${selectedCustomer.dien_thoai ? ` (${selectedCustomer.dien_thoai})` : ''}`
                   : "Khách lẻ"
                 }
               </span>
@@ -99,7 +99,12 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
                       }}
                       className="hover:bg-blue-50"
                     >
-                      {customer.ten_khach_hang} ({customer.ma_khach_hang})
+                      <div className="flex flex-col w-full">
+                        <span className="font-medium">{customer.ten_khach_hang}</span>
+                        {customer.dien_thoai && (
+                          <span className="text-sm text-gray-500">📞 {customer.dien_thoai}</span>
+                        )}
+                      </div>
                     </CommandItem>
                   ))}
                 </CommandGroup>

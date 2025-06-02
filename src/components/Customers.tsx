@@ -68,7 +68,7 @@ export const Customers = () => {
 
   const filteredCustomers = customers.filter(customer =>
     customer.ten_khach_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.ma_khach_hang.toLowerCase().includes(searchTerm.toLowerCase())
+    (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchTerm.replace(/\s+/g, '')))
   );
 
   // Pagination calculations
@@ -127,20 +127,15 @@ export const Customers = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-lg font-semibold text-gray-900">{customer.ten_khach_hang}</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">Mã: {customer.ma_khach_hang}</p>
+                  {customer.dien_thoai && (
+                    <p className="text-sm text-gray-500 mt-1">📞 {customer.dien_thoai}</p>
+                  )}
                 </div>
                 <User className="h-8 w-8 text-gray-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {customer.dien_thoai && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{customer.dien_thoai}</span>
-                  </div>
-                )}
-                
                 {customer.email && (
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-gray-500" />

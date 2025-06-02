@@ -51,76 +51,83 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
             }
             body {
                 font-family: 'Arial', sans-serif;
-                line-height: 1.6;
+                line-height: 1.4;
                 color: #333;
-                max-width: 800px;
+                max-width: 302px; /* 8cm */
                 margin: 0 auto;
-                padding: 20px;
+                padding: 10px;
+                font-size: 12px;
             }
             .header {
                 text-align: center;
-                border-bottom: 3px solid #1e40af;
-                padding-bottom: 20px;
-                margin-bottom: 30px;
+                border-bottom: 2px solid #1e40af;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
             }
             .company-name {
-                font-size: 24px;
+                font-size: 16px;
                 font-weight: bold;
                 color: #1e40af;
-                margin-bottom: 5px;
+                margin-bottom: 3px;
             }
             .invoice-title {
-                font-size: 20px;
+                font-size: 14px;
                 font-weight: bold;
-                margin-top: 15px;
+                margin-top: 8px;
             }
             .invoice-info {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 30px;
-                padding: 15px;
+                margin-bottom: 15px;
+                padding: 8px;
                 background-color: #f8fafc;
-                border-radius: 8px;
+                border-radius: 4px;
             }
-            .invoice-details, .customer-details {
-                flex: 1;
-            }
-            .invoice-details h3, .customer-details h3 {
+            .customer-details h3 {
                 color: #1e40af;
-                margin-bottom: 10px;
-                font-size: 16px;
+                margin-bottom: 6px;
+                font-size: 13px;
             }
             .detail-item {
-                margin-bottom: 5px;
+                margin-bottom: 3px;
                 display: flex;
+                font-size: 11px;
             }
             .label {
                 font-weight: bold;
-                width: 120px;
+                width: 70px;
                 color: #374151;
             }
             .value {
                 color: #111827;
+                flex: 1;
             }
             .items-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 30px;
+                margin-bottom: 15px;
                 border: 1px solid #e5e7eb;
+                font-size: 10px;
             }
             .items-table th {
                 background-color: #1e40af;
                 color: #000000;
-                padding: 12px;
+                padding: 4px;
                 text-align: left;
                 font-weight: bold;
             }
             .items-table td {
-                padding: 10px 12px;
+                padding: 3px 4px;
                 border-bottom: 1px solid #e5e7eb;
             }
-            .items-table tr:nth-child(even) {
+            .product-name {
+                font-weight: 500;
+                padding: 3px 4px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .product-details {
                 background-color: #f9fafb;
+            }
+            .product-details td {
+                border-bottom: none;
             }
             .text-right {
                 text-align: right;
@@ -135,31 +142,34 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
             }
             .total-row td {
                 border-bottom: none !important;
+                padding: 6px 4px;
             }
             .notes {
-                margin-top: 20px;
-                padding: 15px;
+                margin-top: 10px;
+                padding: 8px;
                 background-color: #f3f4f6;
-                border-radius: 6px;
-                border-left: 4px solid #1e40af;
+                border-radius: 4px;
+                border-left: 3px solid #1e40af;
+                font-size: 11px;
             }
             .notes h4 {
                 color: #1e40af;
-                margin-bottom: 8px;
+                margin-bottom: 4px;
+                font-size: 12px;
             }
             .footer {
-                margin-top: 40px;
+                margin-top: 15px;
                 text-align: center;
-                padding-top: 20px;
+                padding-top: 10px;
                 border-top: 1px solid #e5e7eb;
                 color: #6b7280;
-                font-size: 14px;
+                font-size: 11px;
             }
             .status-badge {
                 display: inline-block;
-                padding: 4px 12px;
-                border-radius: 20px;
-                font-size: 12px;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 10px;
                 font-weight: bold;
                 background-color: #fef3c7;
                 color: #92400e;
@@ -167,9 +177,10 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
             @media print {
                 body {
                     padding: 0;
+                    width: 302px; /* 8cm */
                 }
                 .header {
-                    border-bottom: 2px solid #000;
+                    border-bottom: 1px solid #000;
                 }
                 .items-table th {
                     background-color: #000 !important;
@@ -215,24 +226,38 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
         <table class="items-table">
             <thead>
                 <tr>
-                    <th>Sản phẩm</th>
-                    <th style="width: 80px; text-align: center;">SL</th>
-                    <th style="width: 120px; text-align: right;">Đơn giá</th>
-                    <th style="width: 120px; text-align: right;">Thành tiền</th>
+                    <th colspan="4">Sản phẩm</th>
+                </tr>
+                <tr>
+                    <th style="width: 40%;">Đơn giá</th>
+                    <th style="width: 20%; text-align: center;">SL</th>
+                    <th style="width: 40%; text-align: right;">Thành tiền</th>
                 </tr>
             </thead>
             <tbody>
                 ${sale.sale_items?.map((item, index) => `
                     <tr>
-                        <td>${item.products?.ten_hang || 'Sản phẩm không xác định'}</td>
+                        <td colspan="4" class="product-name">${item.products?.ten_hang || 'Sản phẩm không xác định'}</td>
+                    </tr>
+                    <tr class="product-details">
+                        <td>${item.gia_ban.toLocaleString('vi-VN')} ₫</td>
                         <td class="text-center">${item.so_luong}</td>
-                        <td class="text-right">${item.gia_ban.toLocaleString('vi-VN')} ₫</td>
                         <td class="text-right">${(item.thanh_tien || item.so_luong * item.gia_ban).toLocaleString('vi-VN')} ₫</td>
                     </tr>
                 `).join('') || ''}
+                <tr class="product-details">
+                    <td colspan="2" class="text-right">Tổng tiền hàng:</td>
+                    <td class="text-right">${sale.tong_tien.toLocaleString('vi-VN')} ₫</td>
+                </tr>
+                ${sale.giam_gia_so_tien ? `
+                    <tr class="product-details">
+                        <td colspan="2" class="text-right">Giảm giá:</td>
+                        <td class="text-right text-red-600">-${sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫</td>
+                    </tr>
+                ` : ''}
                 <tr class="total-row">
-                    <td colspan="3" class="text-right"><strong>TỔNG CỘNG:</strong></td>
-                    <td class="text-right"><strong>${sale.tong_tien.toLocaleString('vi-VN')} ₫</strong></td>
+                    <td colspan="2" class="text-right"><strong>TỔNG CỘNG:</strong></td>
+                    <td class="text-right"><strong>${sale.thanh_tien.toLocaleString('vi-VN')} ₫</strong></td>
                 </tr>
             </tbody>
         </table>

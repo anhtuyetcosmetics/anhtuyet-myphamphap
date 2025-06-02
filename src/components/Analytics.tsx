@@ -47,7 +47,7 @@ export const Analytics = () => {
   );
 
   // Tính toán thống kê thực từ dữ liệu (chỉ tính các đơn hàng chưa hủy)
-  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.tong_tien, 0);
+  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.thanh_tien, 0);
   const totalProfit = Math.round(totalRevenue * 0.3); // Giả sử lợi nhuận 30%
   const totalOrders = activeSales.length;
   const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
@@ -57,7 +57,7 @@ export const Analytics = () => {
     const date = new Date(sale.ngay_ban);
     const month = `T${date.getMonth() + 1}`;
     const existing = acc.find(item => item.name === month);
-    const revenue = sale.tong_tien;
+    const revenue = sale.thanh_tien;
     const profit = Math.round(revenue * 0.3);
     
     if (existing) {

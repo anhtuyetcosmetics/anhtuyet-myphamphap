@@ -30,7 +30,7 @@ export const Dashboard = () => {
   );
 
   // Tính toán thống kê thực (chỉ tính các đơn hàng chưa hủy)
-  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.tong_tien, 0);
+  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.thanh_tien, 0);
   const totalProducts = products?.length || 0;
   const totalCustomers = customerResult?.data?.length || 0;
   const lowStockItems = inventory?.filter(item => item.so_luong_hien_tai < 10).length || 0;
@@ -41,9 +41,9 @@ export const Dashboard = () => {
     const dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()];
     const existing = acc.find(item => item.name === dayName);
     if (existing) {
-      existing.sales += sale.tong_tien;
+      existing.sales += sale.thanh_tien;
     } else {
-      acc.push({ name: dayName, sales: sale.tong_tien });
+      acc.push({ name: dayName, sales: sale.thanh_tien });
     }
     return acc;
   }, [] as Array<{ name: string; sales: number }>);
@@ -54,9 +54,9 @@ export const Dashboard = () => {
     const month = `T${date.getMonth() + 1}`;
     const existing = acc.find(item => item.month === month);
     if (existing) {
-      existing.revenue += sale.tong_tien;
+      existing.revenue += sale.thanh_tien;
     } else {
-      acc.push({ month, revenue: sale.tong_tien });
+      acc.push({ month, revenue: sale.thanh_tien });
     }
     return acc;
   }, [] as Array<{ month: string; revenue: number }>);
@@ -64,7 +64,7 @@ export const Dashboard = () => {
   // Hoạt động gần đây từ dữ liệu thực (chỉ tính các đơn hàng chưa hủy)
   const recentActivities = activeSales.slice(0, 4).map(sale => ({
     action: `Hoàn thành đơn hàng #${sale.ma_don_hang}`,
-    amount: `${sale.tong_tien.toLocaleString('vi-VN')} ₫`,
+    amount: `${sale.thanh_tien.toLocaleString('vi-VN')} ₫`,
     time: `${Math.floor((Date.now() - new Date(sale.ngay_ban).getTime()) / (1000 * 60))} phút trước`,
     icon: ShoppingBag
   }));

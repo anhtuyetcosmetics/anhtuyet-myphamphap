@@ -81,16 +81,18 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
     }
 
     return (
-      <div className="flex items-center space-x-2">
-        <Percent className="h-4 w-4 text-gray-500" />
-        <span className="text-sm text-gray-600">Giảm giá:</span>
-        <span className="font-medium text-red-600">
-          {sale.giam_gia_loai === 'percentage' 
-            ? `${sale.giam_gia_gia_tri}%`
-            : `${sale.giam_gia_gia_tri.toLocaleString('vi-VN')} ₫`}
-          {' '}(-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫)
-        </span>
-      </div>
+      <>
+        <div className="flex items-center space-x-2">
+          <Percent className="h-4 w-4 text-gray-500" />
+          <span className="text-sm text-gray-600">Giảm giá:</span>
+          <span className="font-medium text-red-600">
+            {sale.giam_gia_loai === 'percentage' 
+              ? `${sale.giam_gia_gia_tri}%`
+              : `${sale.giam_gia_gia_tri.toLocaleString('vi-VN')} ₫`}
+            {' '}(-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫)
+          </span>
+        </div>
+      </>
     );
   };
 
@@ -208,11 +210,23 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
                 ))}
               </div>
               
-              <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                <span className="text-lg font-medium">Tổng cộng:</span>
-                <span className="text-xl font-bold text-blue-600">
-                  {sale.tong_tien.toLocaleString('vi-VN')} ₫
-                </span>
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-medium">Tổng tiền hàng:</span>
+                  <span className="text-lg">{sale.tong_tien.toLocaleString('vi-VN')} ₫</span>
+                </div>
+                {sale.giam_gia_so_tien ? (
+                  <div className="flex justify-between items-center text-red-600">
+                    <span className="text-base font-medium">Giảm giá:</span>
+                    <span className="text-lg">-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="text-lg font-semibold">Tổng cộng:</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {sale.thanh_tien.toLocaleString('vi-VN')} ₫
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

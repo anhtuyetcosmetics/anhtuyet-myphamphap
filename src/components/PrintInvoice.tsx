@@ -56,7 +56,7 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 max-width: 302px; /* 8cm */
                 margin: 0 auto;
                 padding: 10px;
-                font-size: 12px;
+                font-size: 13px;
             }
             .header {
                 text-align: center;
@@ -65,13 +65,13 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 margin-bottom: 15px;
             }
             .company-name {
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
                 color: #1e40af;
                 margin-bottom: 3px;
             }
             .invoice-title {
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: bold;
                 margin-top: 8px;
             }
@@ -84,12 +84,12 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
             .customer-details h3 {
                 color: #1e40af;
                 margin-bottom: 6px;
-                font-size: 13px;
+                font-size: 14px;
             }
             .detail-item {
                 margin-bottom: 3px;
                 display: flex;
-                font-size: 11px;
+                font-size: 12px;
             }
             .label {
                 font-weight: bold;
@@ -105,7 +105,7 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 border-collapse: collapse;
                 margin-bottom: 15px;
                 border: 1px solid #e5e7eb;
-                font-size: 10px;
+                font-size: 11px;
             }
             .items-table th {
                 background-color: #1e40af;
@@ -122,6 +122,7 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 font-weight: 500;
                 padding: 3px 4px;
                 border-bottom: 1px solid #e5e7eb;
+                font-size: 12px;
             }
             .product-details {
                 background-color: #f9fafb;
@@ -150,12 +151,12 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 background-color: #f3f4f6;
                 border-radius: 4px;
                 border-left: 3px solid #1e40af;
-                font-size: 11px;
+                font-size: 12px;
             }
             .notes h4 {
                 color: #1e40af;
                 margin-bottom: 4px;
-                font-size: 12px;
+                font-size: 13px;
             }
             .footer {
                 margin-top: 15px;
@@ -163,13 +164,13 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                 padding-top: 10px;
                 border-top: 1px solid #e5e7eb;
                 color: #6b7280;
-                font-size: 11px;
+                font-size: 12px;
             }
             .status-badge {
                 display: inline-block;
                 padding: 2px 6px;
                 border-radius: 10px;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: bold;
                 background-color: #fef3c7;
                 color: #92400e;
@@ -200,7 +201,7 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
             <div style="margin-top: 10px;">
                 <strong>Số: ${sale.ma_don_hang}</strong>
             </div>
-            <div style="margin-top: 5px; color: #666;">
+            <div style="margin-top: 5px; color: #000;">
                 Ngày: ${sale.ngay_ban ? new Date(sale.ngay_ban).toLocaleDateString('vi-VN') : 'N/A'}
             </div>
         </div>

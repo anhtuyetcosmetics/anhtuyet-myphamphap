@@ -52,8 +52,7 @@ export default defineConfig(({ mode }) => ({
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png',
-            form_factor: 'wide'
+            type: 'image/png'
           }
         ],
         categories: ['business', 'productivity'],

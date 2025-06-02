@@ -29,6 +29,7 @@ export interface SaleWithDetails extends Sale {
     ten_khach_hang: string;
     ma_khach_hang: string;
     dia_chi: string | null;
+    dien_thoai: string | null;
   };
   sale_items?: Array<SaleItem & {
     products?: {
@@ -46,7 +47,7 @@ export const useSales = () => {
         .from('sales')
         .select(`
           *,
-          customers (ten_khach_hang, ma_khach_hang),
+          customers (ten_khach_hang, ma_khach_hang, dien_thoai, dia_chi),
           sale_items (
             *,
             products (ten_hang, ma_hang)

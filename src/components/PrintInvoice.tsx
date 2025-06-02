@@ -202,6 +202,10 @@ const generateInvoiceHTML = (sale: SaleWithDetails): string => {
                     <span class="value">${sale.customers?.ten_khach_hang || 'Khách lẻ'}</span>
                 </div>
                 <div class="detail-item">
+                    <span class="label">Điện thoại:</span>
+                    <span class="value">${sale.customers?.dien_thoai || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
                     <span class="label">Địa chỉ:</span>
                     <span class="value">${sale.customers?.dia_chi || 'N/A'}</span>
                 </div>

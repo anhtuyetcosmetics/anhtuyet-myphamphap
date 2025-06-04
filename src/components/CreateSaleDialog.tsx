@@ -43,7 +43,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const [trangThai, setTrangThai] = useState('pending');
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [discount, setDiscount] = useState<Discount>({ type: 'percentage', value: 0 });
+  const [discount, setDiscount] = useState<Discount>({ type: 'fixed', value: 0 });
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [productSearchMode, setProductSearchMode] = useState<'select' | 'scan'>('select');
 
@@ -65,12 +65,26 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const handleProductSelect = (productId: number) => {
     const selectedProduct = products?.find(p => p.id === productId);
     if (selectedProduct) {
-      setSaleItems([...saleItems, {
-        product_id: productId,
-        so_luong: 1,
-        gia_ban: selectedProduct.gia_ban || 0,
-        product_name: selectedProduct.ten_hang
-      }]);
+      // Check if product already exists in the list
+      const existingItemIndex = saleItems.findIndex(item => item.product_id === productId);
+      
+      if (existingItemIndex !== -1) {
+        // Product exists, update quantity
+        const updatedItems = [...saleItems];
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          so_luong: updatedItems[existingItemIndex].so_luong + 1
+        };
+        setSaleItems(updatedItems);
+      } else {
+        // Product doesn't exist, add new item
+        setSaleItems([...saleItems, {
+          product_id: productId,
+          so_luong: 1,
+          gia_ban: selectedProduct.gia_ban || 0,
+          product_name: selectedProduct.ten_hang
+        }]);
+      }
     }
     setShowProductSearch(false);
   };
@@ -191,7 +205,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         setGhiChu('');
         setTrangThai('pending');
         setSaleItems([]);
-        setDiscount({ type: 'percentage', value: 0 });
+        setDiscount({ type: 'fixed', value: 0 });
         onOpenChange(false);
       }
     } catch (error) {
@@ -263,15 +277,15 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
               {saleItems.length > 0 && (
                 <div className="space-y-3">
                   {/* Header for mobile-optimized layout */}
-                  <div className="grid grid-cols-4 gap-3 px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
-                    <div className="col-span-2">Sản phẩm</div>
+                  <div className="grid grid-cols-[2fr_0.5fr_1fr] gap-3 px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+                    <div>Sản phẩm</div>
                     <div className="text-center">SL</div>
                     <div className="text-center">Giá</div>
                   </div>
 
                   {saleItems.map((item, index) => (
-                    <div key={index} className="grid grid-cols-4 gap-3 items-center p-3 border rounded-lg relative">
-                      <div className="col-span-2">
+                    <div key={index} className="grid grid-cols-[2fr_0.5fr_1fr] gap-3 items-center p-3 border rounded-lg relative">
+                      <div>
                         <div className="text-sm font-medium leading-tight">{item.product_name}</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {products?.find(p => p.id === item.product_id)?.ma_hang}
@@ -284,7 +298,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
                           min="1"
                           value={item.so_luong}
                           onChange={(e) => updateSaleItem(index, 'so_luong', parseInt(e.target.value))}
-                          className="text-center text-sm"
+                          className="text-center text-sm w-[50px] mx-auto"
                         />
                       </div>
                       
@@ -331,20 +345,18 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
                           value={discount.type}
                           onValueChange={(value: 'percentage' | 'fixed') => handleDiscountTypeChange(value)}
                         >
-                          <SelectTrigger className="w-[120px]">
+                          <SelectTrigger className="w-[60px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="percentage">
-                              <div className="flex items-center">
-                                <Percent className="h-4 w-4 mr-2" />
-                                Phần trăm
+                              <div className="flex items-center justify-center">
+                                <Percent className="h-4 w-4" />
                               </div>
                             </SelectItem>
                             <SelectItem value="fixed">
-                              <div className="flex items-center">
-                                <DollarSign className="h-4 w-4 mr-2" />
-                                Số tiền
+                              <div className="flex items-center justify-center">
+                                <DollarSign className="h-4 w-4" />
                               </div>
                             </SelectItem>
                           </SelectContent>
@@ -355,7 +367,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
                           max={discount.type === 'percentage' ? 100 : undefined}
                           value={discount.value}
                           onChange={(e) => handleDiscountValueChange(e.target.value)}
-                          className="flex-1"
+                          className="flex-1 text-base"
                           placeholder={discount.type === 'percentage' ? 'Nhập % giảm giá' : 'Nhập số tiền giảm'}
                         />
                       </div>

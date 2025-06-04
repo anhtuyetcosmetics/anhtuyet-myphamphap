@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Anh Tuyết Mỹ Phẩm Pháp',
-        short_name: 'Anh Tuyết',
+        name: 'Ánh Tuyết Mỹ Phẩm Pháp',
+        short_name: 'Ánh Tuyết',
         description: 'Ứng dụng quản lý cửa hàng mỹ phẩm',
         theme_color: '#ffffff',
         background_color: '#ffffff',

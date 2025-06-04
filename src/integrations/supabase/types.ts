@@ -16,6 +16,7 @@ export type Database = {
           email: string | null
           id: number
           ma_khach_hang: string
+          ngay_mua_gan_nhat: string | null
           ngay_tao: string | null
           ten_khach_hang: string
           tong_mua: number | null
@@ -26,6 +27,7 @@ export type Database = {
           email?: string | null
           id?: number
           ma_khach_hang: string
+          ngay_mua_gan_nhat?: string | null
           ngay_tao?: string | null
           ten_khach_hang: string
           tong_mua?: number | null
@@ -36,6 +38,7 @@ export type Database = {
           email?: string | null
           id?: number
           ma_khach_hang?: string
+          ngay_mua_gan_nhat?: string | null
           ngay_tao?: string | null
           ten_khach_hang?: string
           tong_mua?: number | null
@@ -251,27 +254,39 @@ export type Database = {
         Row: {
           customer_id: number | null
           ghi_chu: string | null
+          giam_gia_gia_tri: number | null
+          giam_gia_loai: string | null
+          giam_gia_so_tien: number | null
           id: number
           ma_don_hang: string
           ngay_ban: string | null
+          thanh_tien: number
           tong_tien: number
           trang_thai: string | null
         }
         Insert: {
           customer_id?: number | null
           ghi_chu?: string | null
+          giam_gia_gia_tri?: number | null
+          giam_gia_loai?: string | null
+          giam_gia_so_tien?: number | null
           id?: number
           ma_don_hang: string
           ngay_ban?: string | null
+          thanh_tien?: number
           tong_tien?: number
           trang_thai?: string | null
         }
         Update: {
           customer_id?: number | null
           ghi_chu?: string | null
+          giam_gia_gia_tri?: number | null
+          giam_gia_loai?: string | null
+          giam_gia_so_tien?: number | null
           id?: number
           ma_don_hang?: string
           ngay_ban?: string | null
+          thanh_tien?: number
           tong_tien?: number
           trang_thai?: string | null
         }
@@ -284,6 +299,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          role: string
+          ten_nhan_vien: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          role?: string
+          ten_nhan_vien: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          role?: string
+          ten_nhan_vien?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
       }
       suppliers: {
         Row: {
@@ -308,44 +353,6 @@ export type Database = {
           tong_mua?: number | null
         }
         Relationships: []
-      }
-      staff: {
-        Row: {
-          id: string
-          email: string
-          ten_nhan_vien: string
-          username: string
-          role: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          email: string
-          ten_nhan_vien: string
-          username: string
-          role?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          ten_nhan_vien?: string
-          username?: string
-          role?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
       }
     }
     Views: {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -10,12 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2, Percent, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Loader2, Percent, DollarSign, ScanBarcode } from 'lucide-react';
 import { useAddSale, useAddSaleItem } from '@/hooks/useSales';
 import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSearchSelect } from './CustomerSearchSelect';
-import { ProductSearchSelect } from './ProductSearchSelect';
+import { ProductSearchDialog } from './ProductSearchDialog';
 
 interface CreateSaleDialogProps {
   open: boolean;
@@ -44,6 +45,8 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [discount, setDiscount] = useState<Discount>({ type: 'percentage', value: 0 });
+  const [showProductSearch, setShowProductSearch] = useState(false);
+  const [productSearchMode, setProductSearchMode] = useState<'select' | 'scan'>('select');
 
   const addSaleMutation = useAddSale();
   const addSaleItemMutation = useAddSaleItem();
@@ -51,7 +54,26 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const { toast } = useToast();
 
   const addSaleItem = () => {
-    setSaleItems([...saleItems, { product_id: 0, so_luong: 1, gia_ban: 0 }]);
+    setProductSearchMode('select');
+    setShowProductSearch(true);
+  };
+
+  const handleScanProduct = () => {
+    setProductSearchMode('scan');
+    setShowProductSearch(true);
+  };
+
+  const handleProductSelect = (productId: number) => {
+    const selectedProduct = products?.find(p => p.id === productId);
+    if (selectedProduct) {
+      setSaleItems([...saleItems, {
+        product_id: productId,
+        so_luong: 1,
+        gia_ban: selectedProduct.gia_ban || 0,
+        product_name: selectedProduct.ten_hang
+      }]);
+    }
+    setShowProductSearch(false);
   };
 
   const removeSaleItem = (index: number) => {
@@ -60,17 +82,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
 
   const updateSaleItem = (index: number, field: keyof SaleItem, value: any) => {
     const updated = [...saleItems];
-    if (field === 'product_id') {
-      const selectedProduct = products?.find(p => p.id === value);
-      updated[index] = { 
-        ...updated[index], 
-        [field]: value,
-        gia_ban: selectedProduct?.gia_ban || 0,
-        product_name: selectedProduct?.ten_hang
-      };
-    } else {
-      updated[index] = { ...updated[index], [field]: value };
-    }
+    updated[index] = { ...updated[index], [field]: value };
     setSaleItems(updated);
   };
 
@@ -200,182 +212,206 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const total = calculateTotal();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo đơn hàng mới</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <CustomerSearchSelect
-              selectedCustomerId={customerId}
-              onCustomerSelect={setCustomerId}
-            />
-            
-            <div className="space-y-2">
-              <Label htmlFor="trang_thai">Trạng thái</Label>
-              <Select value={trangThai} onValueChange={setTrangThai}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Đang xử lý</SelectItem>
-                  <SelectItem value="completed">Hoàn thành</SelectItem>
-                  <SelectItem value="cancelled">Đã hủy</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Sản phẩm</Label>
-              <Button type="button" onClick={addSaleItem} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Thêm sản phẩm
-              </Button>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tạo đơn hàng mới</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <CustomerSearchSelect
+                selectedCustomerId={customerId}
+                onCustomerSelect={setCustomerId}
+              />
+              
+              <div className="space-y-2">
+                <Label htmlFor="trang_thai">Trạng thái</Label>
+                <Select value={trangThai} onValueChange={setTrangThai}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Đang xử lý</SelectItem>
+                    <SelectItem value="completed">Hoàn thành</SelectItem>
+                    <SelectItem value="cancelled">Đã hủy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {saleItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg">
-                  <ProductSearchSelect
-                    selectedProductId={item.product_id}
-                    onProductSelect={(productId) => updateSaleItem(index, 'product_id', productId)}
-                    placeholder="Chọn sản phẩm"
-                  />
-                  
-                  <div>
-                    <Label>Số lượng</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.so_luong}
-                      onChange={(e) => updateSaleItem(index, 'so_luong', parseInt(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Giá bán</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={item.gia_ban}
-                      onChange={(e) => updateSaleItem(index, 'gia_ban', parseFloat(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Thành tiền</Label>
-                    <Input
-                      value={(item.so_luong * item.gia_ban).toLocaleString('vi-VN')}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                  
-                  <Button
-                    type="button"
-                    variant="destructive"
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Sản phẩm</Label>
+                <div className="flex gap-2">
+                  <Button type="button" onClick={addSaleItem} size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Thêm sản phẩm
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleScanProduct} 
                     size="sm"
-                    onClick={() => removeSaleItem(index)}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <ScanBarcode className="h-4 w-4" />
                   </Button>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {saleItems.length > 0 && (
-              <div className="space-y-3 border-t pt-4">
-                <div className="flex justify-between items-center">
-                  <Label className="text-base">Tạm tính:</Label>
-                  <span className="text-lg">{subtotal.toLocaleString('vi-VN')} ₫</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <Label>Giảm giá</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={discount.type}
-                        onValueChange={(value: 'percentage' | 'fixed') => handleDiscountTypeChange(value)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">
-                            <div className="flex items-center">
-                              <Percent className="h-4 w-4 mr-2" />
-                              Phần trăm
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="fixed">
-                            <div className="flex items-center">
-                              <DollarSign className="h-4 w-4 mr-2" />
-                              Số tiền
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+              <div className="space-y-3">
+                {saleItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg">
+                    <div>
+                      <Label>Sản phẩm</Label>
+                      <div className="p-2 bg-gray-50 rounded border text-sm">
+                        <div className="font-medium">{item.product_name}</div>
+                        <div className="text-gray-500">
+                          Mã: {products?.find(p => p.id === item.product_id)?.ma_hang}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Số lượng</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.so_luong}
+                        onChange={(e) => updateSaleItem(index, 'so_luong', parseInt(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Giá bán</Label>
                       <Input
                         type="number"
                         min="0"
-                        max={discount.type === 'percentage' ? 100 : undefined}
-                        value={discount.value}
-                        onChange={(e) => handleDiscountValueChange(e.target.value)}
-                        className="flex-1"
-                        placeholder={discount.type === 'percentage' ? 'Nhập % giảm giá' : 'Nhập số tiền giảm'}
+                        value={item.gia_ban}
+                        onChange={(e) => updateSaleItem(index, 'gia_ban', parseFloat(e.target.value))}
                       />
                     </div>
+                    
+                    <div>
+                      <Label>Thành tiền</Label>
+                      <Input
+                        value={(item.so_luong * item.gia_ban).toLocaleString('vi-VN')}
+                        readOnly
+                        className="bg-gray-50"
+                      />
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeSaleItem(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="flex-1">
-                    <Label>Số tiền giảm:</Label>
-                    <div className="text-lg font-medium text-red-600">
-                      -{discountAmount.toLocaleString('vi-VN')} ₫
+                ))}
+              </div>
+
+              {saleItems.length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-base">Tạm tính:</Label>
+                    <span className="text-lg">{subtotal.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <Label>Giảm giá</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={discount.type}
+                          onValueChange={(value: 'percentage' | 'fixed') => handleDiscountTypeChange(value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">
+                              <div className="flex items-center">
+                                <Percent className="h-4 w-4 mr-2" />
+                                Phần trăm
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="fixed">
+                              <div className="flex items-center">
+                                <DollarSign className="h-4 w-4 mr-2" />
+                                Số tiền
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          min="0"
+                          max={discount.type === 'percentage' ? 100 : undefined}
+                          value={discount.value}
+                          onChange={(e) => handleDiscountValueChange(e.target.value)}
+                          className="flex-1"
+                          placeholder={discount.type === 'percentage' ? 'Nhập % giảm giá' : 'Nhập số tiền giảm'}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <Label>Số tiền giảm:</Label>
+                      <div className="text-lg font-medium text-red-600">
+                        -{discountAmount.toLocaleString('vi-VN')} ₫
+                      </div>
                     </div>
                   </div>
+
+                  <div className="flex justify-between items-center border-t pt-3">
+                    <Label className="text-lg font-semibold">Tổng tiền:</Label>
+                    <span className="text-xl font-bold text-blue-600">
+                      {total.toLocaleString('vi-VN')} ₫
+                    </span>
+                  </div>
                 </div>
+              )}
+            </div>
 
-                <div className="flex justify-between items-center border-t pt-3">
-                  <Label className="text-lg font-semibold">Tổng tiền:</Label>
-                  <span className="text-xl font-bold text-blue-600">
-                    {total.toLocaleString('vi-VN')} ₫
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="ghi_chu">Ghi chú</Label>
+              <Textarea
+                id="ghi_chu"
+                value={ghiChu}
+                onChange={(e) => setGhiChu(e.target.value)}
+                placeholder="Nhập ghi chú cho đơn hàng"
+                rows={3}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ghi_chu">Ghi chú</Label>
-            <Textarea
-              id="ghi_chu"
-              value={ghiChu}
-              onChange={(e) => setGhiChu(e.target.value)}
-              placeholder="Nhập ghi chú cho đơn hàng"
-              rows={3}
-            />
-          </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Tạo đơn hàng
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Tạo đơn hàng
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <ProductSearchDialog
+        open={showProductSearch}
+        onOpenChange={setShowProductSearch}
+        onProductSelect={handleProductSelect}
+        autoScan={productSearchMode === 'scan'}
+      />
+    </>
   );
 };

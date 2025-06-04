@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -261,59 +260,61 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {saleItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg">
-                    <div>
-                      <Label>Sản phẩm</Label>
-                      <div className="p-2 bg-gray-50 rounded border text-sm">
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-gray-500">
-                          Mã: {products?.find(p => p.id === item.product_id)?.ma_hang}
+              {saleItems.length > 0 && (
+                <div className="space-y-3">
+                  {/* Header for mobile-optimized layout */}
+                  <div className="grid grid-cols-4 gap-3 px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+                    <div className="col-span-2">Sản phẩm</div>
+                    <div className="text-center">SL</div>
+                    <div className="text-center">Giá</div>
+                  </div>
+
+                  {saleItems.map((item, index) => (
+                    <div key={index} className="grid grid-cols-4 gap-3 items-center p-3 border rounded-lg relative">
+                      <div className="col-span-2">
+                        <div className="text-sm font-medium leading-tight">{item.product_name}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {products?.find(p => p.id === item.product_id)?.ma_hang}
                         </div>
                       </div>
+                      
+                      <div>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.so_luong}
+                          onChange={(e) => updateSaleItem(index, 'so_luong', parseInt(e.target.value))}
+                          className="text-center text-sm"
+                        />
+                      </div>
+                      
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={item.gia_ban}
+                          onChange={(e) => updateSaleItem(index, 'gia_ban', parseFloat(e.target.value))}
+                          className="text-sm pr-8"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSaleItem(index)}
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      {/* Subtotal display for each item */}
+                      <div className="col-span-4 text-right text-xs text-gray-600 mt-1">
+                        Thành tiền: {(item.so_luong * item.gia_ban).toLocaleString('vi-VN')} ₫
+                      </div>
                     </div>
-                    
-                    <div>
-                      <Label>Số lượng</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.so_luong}
-                        onChange={(e) => updateSaleItem(index, 'so_luong', parseInt(e.target.value))}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Giá bán</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={item.gia_ban}
-                        onChange={(e) => updateSaleItem(index, 'gia_ban', parseFloat(e.target.value))}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Thành tiền</Label>
-                      <Input
-                        value={(item.so_luong * item.gia_ban).toLocaleString('vi-VN')}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-                    
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeSaleItem(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {saleItems.length > 0 && (
                 <div className="space-y-3 border-t pt-4">

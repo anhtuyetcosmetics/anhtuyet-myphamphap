@@ -33,6 +33,7 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState<'text' | 'barcode'>(autoScan ? 'barcode' : 'text');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { data: products } = useProducts();
   const { toast } = useToast();
@@ -69,9 +70,10 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
       if (product) {
         onProductSelect(product.id);
         setBarcodeInput('');
+        onOpenChange(false);
         toast({
           title: "Tìm thấy sản phẩm",
-          description: `Đã chọn: ${product.ten_hang}`,
+          description: `Đã thêm: ${product.ten_hang}`,
         });
       } else {
         toast({
@@ -81,7 +83,7 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
         });
       }
     }
-  }, [barcodeInput, products, onProductSelect, toast]);
+  }, [barcodeInput, products, onProductSelect, onOpenChange, toast]);
 
   const handleBarcodeKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -115,11 +117,25 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
         setIsScanning(false);
         
         if (result && result.text) {
-          setBarcodeInput(result.text);
-          toast({
-            title: "Quét thành công",
-            description: `Đã phát hiện mã vạch: ${result.text}, nhấn tìm kiếm để chọn sản phẩm`,
-          });
+          const product = products?.find(p => 
+            p.ma_hang.toLowerCase().includes(result.text.toLowerCase()) ||
+            p.ten_hang.toLowerCase().includes(result.text.toLowerCase())
+          );
+          
+          if (product) {
+            onProductSelect(product.id);
+            onOpenChange(false);
+            toast({
+              title: "Quét thành công",
+              description: `Đã thêm sản phẩm: ${product.ten_hang}`,
+            });
+          } else {
+            setBarcodeInput(result.text);
+            toast({
+              title: "Quét thành công",
+              description: `Đã phát hiện mã vạch: ${result.text}, nhấn tìm kiếm để chọn sản phẩm`,
+            });
+          }
         } else {
           toast({
             title: "Không tìm thấy mã vạch",
@@ -153,7 +169,10 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
   // Auto-trigger camera scan when dialog opens with autoScan=true
   useEffect(() => {
     if (open && autoScan) {
+      setSearchMode('barcode');
       handleCameraCapture();
+    } else if (open && !autoScan) {
+      setSearchMode('text');
     }
   }, [open, autoScan]);
 
@@ -178,6 +197,11 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
     }
   }, [open, mediaStream]);
 
+  const handleProductSelectAndClose = (productId: number) => {
+    onProductSelect(productId);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
@@ -186,72 +210,96 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Barcode Search Section */}
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                placeholder="Quét/nhập mã vạch..."
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyPress={handleBarcodeKeyPress}
-                className="flex-1 border-blue-200"
-              />
-              <Button 
-                onClick={handleBarcodeSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={!barcodeInput.trim()}
-              >
-                <Barcode className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button 
-              variant="outline"
-              onClick={handleCameraCapture}
-              disabled={isScanning}
-              className="w-full border-red-300 text-red-600 hover:bg-red-50"
+          {/* Mode Toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={searchMode === 'text' ? 'default' : 'outline'}
+              onClick={() => setSearchMode('text')}
+              className="flex-1"
             >
-              <Camera className="h-4 w-4 mr-2" />
-              {isScanning ? 'Đang quét...' : 'Quét bằng camera'}
+              <Search className="h-4 w-4 mr-2" />
+              Tìm theo tên/mã
             </Button>
-            {isScanning && (
-              <div className="w-full flex justify-center">
-                <video
-                  ref={videoRef}
-                  style={{ width: '100%', maxWidth: 320, height: 240, background: '#000' }}
-                  autoPlay
-                  muted
-                  playsInline
-                />
-              </div>
-            )}
+            <Button
+              variant={searchMode === 'barcode' ? 'default' : 'outline'}
+              onClick={() => setSearchMode('barcode')}
+              className="flex-1"
+            >
+              <Barcode className="h-4 w-4 mr-2" />
+              Quét mã vạch
+            </Button>
           </div>
 
-          {/* Product Search */}
-          <Command shouldFilter={false} className="border rounded-lg">
-            <CommandInput 
-              placeholder="Tìm kiếm sản phẩm..." 
-              value={searchQuery}
-              onValueChange={handleSearch}
-            />
-            <CommandList className="max-h-[300px] overflow-y-auto">
-              <CommandEmpty>Không tìm thấy sản phẩm</CommandEmpty>
-              <CommandGroup>
-                {filteredProducts.map((product) => (
-                  <CommandItem
-                    key={product.id}
-                    onSelect={() => onProductSelect(product.id)}
-                    className="hover:bg-blue-50 cursor-pointer"
-                  >
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium">{product.ten_hang}</span>
-                      <span className="text-sm text-gray-500">Mã: {product.ma_hang}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          {/* Text Search Mode */}
+          {searchMode === 'text' && (
+            <Command shouldFilter={false} className="border rounded-lg">
+              <CommandInput 
+                placeholder="Tìm kiếm sản phẩm..." 
+                value={searchQuery}
+                onValueChange={handleSearch}
+              />
+              <CommandList className="max-h-[300px] overflow-y-auto">
+                <CommandEmpty>Không tìm thấy sản phẩm</CommandEmpty>
+                <CommandGroup>
+                  {filteredProducts.map((product) => (
+                    <CommandItem
+                      key={product.id}
+                      onSelect={() => handleProductSelectAndClose(product.id)}
+                      className="hover:bg-blue-50 cursor-pointer"
+                    >
+                      <div className="flex flex-col w-full">
+                        <span className="font-medium">{product.ten_hang}</span>
+                        <span className="text-sm text-gray-500">Mã: {product.ma_hang}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          )}
+
+          {/* Barcode Search Mode */}
+          {searchMode === 'barcode' && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  placeholder="Quét/nhập mã vạch..."
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  onKeyPress={handleBarcodeKeyPress}
+                  className="flex-1 border-blue-200"
+                />
+                <Button 
+                  onClick={handleBarcodeSearch}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!barcodeInput.trim()}
+                >
+                  <Barcode className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button 
+                variant="outline"
+                onClick={handleCameraCapture}
+                disabled={isScanning}
+                className="w-full border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                {isScanning ? 'Đang quét...' : 'Quét bằng camera'}
+              </Button>
+              {isScanning && (
+                <div className="w-full flex justify-center">
+                  <video
+                    ref={videoRef}
+                    style={{ width: '100%', maxWidth: 320, height: 240, background: '#000' }}
+                    autoPlay
+                    muted
+                    playsInline
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -16,7 +16,7 @@ import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSearchSelect } from './CustomerSearchSelect';
 import { ProductSearchDialog } from './ProductSearchDialog';
-import { BarcodeScanner } from './BarcodeScanner';
+import BarcodeScanner from './BarcodeScanner';
 
 interface CreateSaleDialogProps {
   open: boolean;

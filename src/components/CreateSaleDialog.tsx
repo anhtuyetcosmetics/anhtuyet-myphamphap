@@ -16,6 +16,7 @@ import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSearchSelect } from './CustomerSearchSelect';
 import { ProductSearchDialog } from './ProductSearchDialog';
+import { BarcodeScanner } from './BarcodeScanner';
 
 interface CreateSaleDialogProps {
   open: boolean;
@@ -46,6 +47,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const [discount, setDiscount] = useState<Discount>({ type: 'fixed', value: 0 });
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [productSearchMode, setProductSearchMode] = useState<'select' | 'scan'>('select');
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   const addSaleMutation = useAddSale();
   const addSaleItemMutation = useAddSaleItem();
@@ -58,8 +60,20 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   };
 
   const handleScanProduct = () => {
-    setProductSearchMode('scan');
-    setShowProductSearch(true);
+    setShowBarcodeScanner(true);
+  };
+
+  const handleBarcodeDetected = (barcode: string) => {
+    const product = products?.find(p => p.ma_hang === barcode);
+    if (product) {
+      handleProductSelect(product);
+    } else {
+      toast({
+        title: "Không tìm thấy sản phẩm",
+        description: `Không tìm thấy sản phẩm với mã vạch ${barcode}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleProductSelect = (product: Product) => {
@@ -420,6 +434,12 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         open={showProductSearch}
         onOpenChange={setShowProductSearch}
         onProductSelect={handleProductSelect}
+      />
+
+      <BarcodeScanner
+        open={showBarcodeScanner}
+        onOpenChange={setShowBarcodeScanner}
+        onBarcodeDetected={handleBarcodeDetected}
       />
     </>
   );

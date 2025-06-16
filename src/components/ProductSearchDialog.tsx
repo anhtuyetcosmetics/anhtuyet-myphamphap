@@ -5,11 +5,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Barcode } from 'lucide-react';
 import { useProducts, Product } from '@/hooks/useProducts';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Search } from 'lucide-react';
 
 interface ProductSearchDialogProps {
   open: boolean;
@@ -23,7 +22,6 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
   onProductSelect,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState<'text' | 'barcode'>('text');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { data: products } = useProducts();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +30,6 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
   useEffect(() => {
     if (open) {
       setSearchQuery('');
-      setSearchMode('text');
       // Use setTimeout to ensure the input is rendered
       setTimeout(() => {
         if (inputRef.current) {
@@ -60,47 +57,19 @@ export const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
     onOpenChange(false);
   }, [onProductSelect, onOpenChange]);
 
-  const handleBarcodeScan = useCallback((barcode: string) => {
-    setSearchQuery(barcode);
-    setSearchMode('text');
-  }, []);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Tìm kiếm sản phẩm</DialogTitle>
         </DialogHeader>
-        <div className="flex gap-2 mb-4 md:hidden">
-          <Button
-            variant={searchMode === 'text' ? 'default' : 'outline'}
-            onClick={() => setSearchMode('text')}
-            className="flex-1"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            Tìm theo tên
-          </Button>
-          <Button
-            variant={searchMode === 'barcode' ? 'default' : 'outline'}
-            onClick={() => setSearchMode('barcode')}
-            className="flex-1"
-          >
-            <Barcode className="w-4 h-4 mr-2" />
-            Quét mã vạch
-          </Button>
-        </div>
         <div className="relative">
           <Input
             ref={inputRef}
-            type={searchMode === 'barcode' ? 'text' : 'text'}
-            placeholder={searchMode === 'barcode' ? 'Quét mã vạch...' : 'Tìm kiếm sản phẩm...'}
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (searchMode === 'barcode' && e.key === 'Enter') {
-                handleBarcodeScan(searchQuery);
-              }
-            }}
             className="w-full"
           />
         </div>

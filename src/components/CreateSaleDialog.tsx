@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +48,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   const [discount, setDiscount] = useState<Discount>({ type: 'fixed', value: 0 });
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [productSearchMode, setProductSearchMode] = useState<'select' | 'scan'>('select');
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   const addSaleMutation = useAddSale();
   const addSaleItemMutation = useAddSaleItem();
@@ -60,7 +61,7 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   };
 
   const handleScanProduct = () => {
-    setShowBarcodeScanner(true);
+    setShowScanner(true);
   };
 
   const handleBarcodeDetected = (barcode: string) => {
@@ -238,9 +239,12 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl h-[90vh]">
           <DialogHeader>
             <DialogTitle>Tạo đơn hàng mới</DialogTitle>
+            <DialogDescription>
+              Quét mã vạch hoặc tìm kiếm sản phẩm để thêm vào đơn hàng
+            </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -436,11 +440,21 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         onProductSelect={handleProductSelect}
       />
 
-      <BarcodeScanner
-        open={showBarcodeScanner}
-        onOpenChange={setShowBarcodeScanner}
-        onBarcodeDetected={handleBarcodeDetected}
-      />
+      {showScanner && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <BarcodeScanner
+            onBarcodeDetected={handleBarcodeDetected}
+            onError={(errorMessage) => {
+              toast({
+                variant: "destructive",
+                title: "Lỗi",
+                description: errorMessage
+              });
+              setShowScanner(false);
+            }}
+          />
+        </div>
+      )}
     </>
   );
 };

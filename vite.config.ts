@@ -8,12 +8,13 @@ import fs from 'fs';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: '0.0.0.0',
+    port: 8083,
     https: {
       key: fs.readFileSync(path.resolve(__dirname, './localhost+2-key.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, './localhost+2.pem')),
     },
+    strictPort: true
   },
   plugins: [
     react(),

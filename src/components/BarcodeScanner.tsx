@@ -1,133 +1,153 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { BrowserMultiFormatReader } from '@zxing/library';
+import { Button } from './ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface BarcodeScannerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onBarcodeDetected: (barcode: string) => void;
+  onError?: (error: string) => void;
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
-  open,
-  onOpenChange,
-  onBarcodeDetected,
-}) => {
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onBarcodeDetected, onError }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    if (open) {
-      startScanning();
-    } else {
-      stopScanning();
-    }
+    const initializeScanner = async () => {
+      try {
+        setIsInitializing(true);
+        setError(null);
 
-    return () => {
-      stopScanning();
-    };
-  }, [open]);
+        // Arrêter le stream existant s'il y en a un
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
 
-  const startScanning = async () => {
-    try {
-      setIsInitializing(true);
-      setError(null);
+        // Demander la permission de la caméra
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
 
-      // Demander la permission de la caméra
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
+        streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          // Attendre que la vidéo soit prête avant de commencer la lecture
+          await new Promise((resolve) => {
+            if (videoRef.current) {
+              videoRef.current.onloadedmetadata = () => {
+                if (videoRef.current) {
+                  videoRef.current.play().then(resolve).catch((err) => {
+                    console.error('Erreur lors de la lecture de la vidéo:', err);
+                    resolve(true); // Continuer même en cas d'erreur
+                  });
+                }
+              };
+            }
+          });
+        }
 
-      const reader = new BrowserMultiFormatReader();
-      readerRef.current = reader;
+        // Initialiser le lecteur de code-barres
+        const reader = new BrowserMultiFormatReader();
+        readerRef.current = reader;
 
-      const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
-      const selectedDeviceId = videoInputDevices[0]?.deviceId;
-
-      if (selectedDeviceId && videoRef.current) {
-        await reader.decodeFromVideoDevice(
-          selectedDeviceId,
+        setIsScanning(true);
+        reader.decodeFromVideoDevice(
+          null,
           videoRef.current,
           (result) => {
             if (result) {
               onBarcodeDetected(result.getText());
-              stopScanning();
-              onOpenChange(false);
             }
           }
         );
-      }
-    } catch (error) {
-      console.error('Error starting barcode scanner:', error);
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          setError('Vui lòng cho phép truy cập camera để quét mã vạch');
-        } else if (error.name === 'NotFoundError') {
-          setError('Không tìm thấy camera');
-        } else {
-          setError('Có lỗi xảy ra khi khởi tạo camera');
-        }
-      }
-    } finally {
-      setIsInitializing(false);
-    }
-  };
 
-  const stopScanning = () => {
+        setIsInitializing(false);
+      } catch (err) {
+        console.error('Erreur lors de l\'initialisation de la caméra:', err);
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        if (onError) {
+          onError(err instanceof Error ? err.message : 'Erreur inconnue');
+        }
+        setIsInitializing(false);
+      }
+    };
+
+    initializeScanner();
+
+    return () => {
+      if (readerRef.current) {
+        readerRef.current.reset();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [onBarcodeDetected, onError]);
+
+  const handleRetry = () => {
+    setError(null);
+    setIsInitializing(true);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
     if (readerRef.current) {
       readerRef.current.reset();
-      readerRef.current = null;
     }
-
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
+    // Réinitialiser le scanner
+    const reader = new BrowserMultiFormatReader();
+    readerRef.current = reader;
+    setIsScanning(true);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-none w-full h-full md:max-w-[600px] md:h-auto">
-        <div className="relative w-full h-full md:aspect-video">
-          {error ? (
-            <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-              <p className="text-lg font-medium text-red-500 mb-4">{error}</p>
-              <Button onClick={() => startScanning()}>Thử lại</Button>
-            </div>
-          ) : (
-            <>
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                playsInline
-                autoPlay
-              />
-              <div className="absolute inset-0 border-2 border-white/50 rounded-lg pointer-events-none" />
-              {isInitializing && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <div className="text-white">Đang khởi tạo camera...</div>
-                </div>
-              )}
-            </>
-          )}
+    <div className="relative w-full h-full">
+      {isInitializing ? (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin" />
+          <span className="ml-2">Đang khởi tạo camera...</span>
         </div>
-      </DialogContent>
-    </Dialog>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center h-full">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={handleRetry}>Thử lại</Button>
+        </div>
+      ) : (
+        <div className="relative w-full h-full">
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            playsInline
+            autoPlay
+          />
+          {/* Overlay avec cadre de scan */}
+          <div className="absolute inset-0 bg-black/50">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-64 h-64 border-2 border-white rounded-lg relative">
+                {/* Coin supérieur gauche */}
+                <div className="absolute -top-1 -left-1 w-8 h-8 border-t-2 border-l-2 border-white"></div>
+                {/* Coin supérieur droit */}
+                <div className="absolute -top-1 -right-1 w-8 h-8 border-t-2 border-r-2 border-white"></div>
+                {/* Coin inférieur gauche */}
+                <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-2 border-l-2 border-white"></div>
+                {/* Coin inférieur droit */}
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-2 border-r-2 border-white"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +21,17 @@ export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState('Tất cả');
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: transactions, isLoading, error } = useInventoryTransactions();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Focus sur l'input au montage du composant
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
@@ -98,7 +105,8 @@ export const Inventory = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Tìm kiếm giao dịch..."
+                ref={inputRef}
+                placeholder="Tìm kiếm theo tên hoặc mã sản phẩm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

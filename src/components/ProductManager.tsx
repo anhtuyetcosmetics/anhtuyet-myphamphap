@@ -57,7 +57,8 @@ export const ProductManager = () => {
   const categories = ['Tất cả', ...new Set(products?.map(p => p.nhom_hang).filter(Boolean) || [])];
 
   const filteredProducts = products?.filter(product =>
-    product.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (product.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     product.ma_hang.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (selectedCategory === 'Tất cả' || product.nhom_hang === selectedCategory)
   ) || [];
 

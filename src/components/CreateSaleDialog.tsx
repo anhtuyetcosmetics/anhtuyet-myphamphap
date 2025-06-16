@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Loader2, Percent, DollarSign, ScanBarcode } from 'lucide-react';
 import { useAddSale, useAddSaleItem } from '@/hooks/useSales';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSearchSelect } from './CustomerSearchSelect';
 import { ProductSearchDialog } from './ProductSearchDialog';
@@ -62,29 +62,26 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
     setShowProductSearch(true);
   };
 
-  const handleProductSelect = (productId: number) => {
-    const selectedProduct = products?.find(p => p.id === productId);
-    if (selectedProduct) {
-      // Check if product already exists in the list
-      const existingItemIndex = saleItems.findIndex(item => item.product_id === productId);
-      
-      if (existingItemIndex !== -1) {
-        // Product exists, update quantity
-        const updatedItems = [...saleItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          so_luong: updatedItems[existingItemIndex].so_luong + 1
-        };
-        setSaleItems(updatedItems);
-      } else {
-        // Product doesn't exist, add new item
-        setSaleItems([...saleItems, {
-          product_id: productId,
-          so_luong: 1,
-          gia_ban: selectedProduct.gia_ban || 0,
-          product_name: selectedProduct.ten_hang
-        }]);
-      }
+  const handleProductSelect = (product: Product) => {
+    // Check if product already exists in the list
+    const existingItemIndex = saleItems.findIndex(item => item.product_id === product.id);
+    
+    if (existingItemIndex !== -1) {
+      // Product exists, update quantity
+      const updatedItems = [...saleItems];
+      updatedItems[existingItemIndex] = {
+        ...updatedItems[existingItemIndex],
+        so_luong: updatedItems[existingItemIndex].so_luong + 1
+      };
+      setSaleItems(updatedItems);
+    } else {
+      // Product doesn't exist, add new item
+      setSaleItems([...saleItems, {
+        product_id: product.id,
+        so_luong: 1,
+        gia_ban: product.gia_ban || 0,
+        product_name: product.ten_hang
+      }]);
     }
     setShowProductSearch(false);
   };
@@ -423,7 +420,6 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
         open={showProductSearch}
         onOpenChange={setShowProductSearch}
         onProductSelect={handleProductSelect}
-        autoScan={productSearchMode === 'scan'}
       />
     </>
   );

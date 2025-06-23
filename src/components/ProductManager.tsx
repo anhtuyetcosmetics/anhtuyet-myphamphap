@@ -16,7 +16,7 @@ export const ProductManager = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [itemsPerPage, setItemsPerPage] = useState(48);
   
   const { data: products, isLoading, error } = useProducts();
   const deleteProduct = useDeleteProduct();

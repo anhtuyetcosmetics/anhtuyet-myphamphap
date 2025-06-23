@@ -239,7 +239,10 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl h-[90vh]">
+        <DialogContent 
+          className="max-w-4xl h-[90vh]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Tạo đơn hàng mới</DialogTitle>
             <DialogDescription>

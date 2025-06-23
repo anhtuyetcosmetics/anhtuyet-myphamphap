@@ -9,6 +9,7 @@ import { ProductGrid } from '@/components/ProductGrid';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { removeVietnameseTones } from '@/lib/utils';
 
 export const ProductManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,11 +57,21 @@ export const ProductManager = () => {
 
   const categories = ['Tất cả', ...new Set(products?.map(p => p.nhom_hang).filter(Boolean) || [])];
 
-  const filteredProducts = products?.filter(product =>
-    (product.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     product.ma_hang.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedCategory === 'Tất cả' || product.nhom_hang === selectedCategory)
-  ) || [];
+  const filteredProducts = products?.filter(product => {
+    const nameLower = product.ten_hang.toLowerCase();
+    const codeLower = product.ma_hang.toLowerCase();
+    const nameNoAccent = removeVietnameseTones(nameLower);
+    const codeNoAccent = removeVietnameseTones(codeLower);
+    const searchLower = searchTerm.toLowerCase();
+    const searchNoAccent = removeVietnameseTones(searchLower);
+    return (
+      (nameLower.includes(searchLower) ||
+       codeLower.includes(searchLower) ||
+       nameNoAccent.includes(searchNoAccent) ||
+       codeNoAccent.includes(searchNoAccent)) &&
+      (selectedCategory === 'Tất cả' || product.nhom_hang === selectedCategory)
+    );
+  }) || [];
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);

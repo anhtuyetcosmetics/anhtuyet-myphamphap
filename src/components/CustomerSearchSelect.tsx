@@ -8,6 +8,7 @@ import { Plus, Search } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { AddCustomerDialog } from './AddCustomerDialog';
 import { useDebounce } from '@/hooks/use-debounce';
+import { removeVietnameseTones } from '@/lib/utils';
 
 interface CustomerSearchSelectProps {
   selectedCustomerId: number | null;
@@ -32,18 +33,25 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
     [customers, selectedCustomerId]
   );
 
+  const MAX_RESULTS = 50;
+
   const filteredCustomers = useMemo(() => {
     if (!debouncedSearch) {
-      return customers.slice(0, ITEMS_PER_PAGE);
+      return customers.slice(0, 5);
     }
-    
     const searchLower = debouncedSearch.toLowerCase();
+    const searchNoAccent = removeVietnameseTones(searchLower);
     return customers
-      .filter(customer =>
-        customer.ten_khach_hang.toLowerCase().includes(searchLower) ||
-        (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
-      )
-      .slice(0, ITEMS_PER_PAGE);
+      .filter(customer => {
+        const nameLower = customer.ten_khach_hang.toLowerCase();
+        const nameNoAccent = removeVietnameseTones(nameLower);
+        return (
+          nameLower.includes(searchLower) ||
+          nameNoAccent.includes(searchNoAccent) ||
+          (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
+        );
+      })
+      .slice(0, MAX_RESULTS);
   }, [customers, debouncedSearch]);
 
   const handleSearch = useCallback((value: string) => {
@@ -71,15 +79,22 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0 bg-white border-blue-200" align="start">
+          <PopoverContent className="w-full p-0 bg-white border-blue-200 overflow-visible" align="start">
             <Command shouldFilter={false}>
               <CommandInput
                 placeholder="Tìm kiếm khách hàng..."
                 value={searchQuery}
                 onValueChange={handleSearch}
               />
-              <CommandList className="max-h-[300px] overflow-y-auto">
-                <CommandEmpty>Không tìm thấy khách hàng</CommandEmpty>
+              <CommandList
+                className="max-h-[300px] overflow-y-auto"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'auto' }}
+              >
+                <CommandEmpty>
+                  {debouncedSearch && filteredCustomers.length >= MAX_RESULTS
+                    ? "Có quá nhiều kết quả, hãy nhập chi tiết hơn."
+                    : "Không tìm thấy khách hàng"}
+                </CommandEmpty>
                 <CommandGroup>
                   <CommandItem
                     onSelect={() => {

@@ -21,6 +21,7 @@ import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { removeVietnameseTones } from '@/lib/utils';
 
 export const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,10 +67,17 @@ export const Customers = () => {
     );
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.ten_khach_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchTerm.replace(/\s+/g, '')))
-  );
+  const filteredCustomers = customers.filter(customer => {
+    const nameLower = customer.ten_khach_hang.toLowerCase();
+    const nameNoAccent = removeVietnameseTones(nameLower);
+    const searchLower = searchTerm.toLowerCase();
+    const searchNoAccent = removeVietnameseTones(searchLower);
+    return (
+      nameLower.includes(searchLower) ||
+      nameNoAccent.includes(searchNoAccent) ||
+      (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
+    );
+  });
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);

@@ -16,6 +16,7 @@ import {
 import { useInventoryTransactions } from '@/hooks/useInventory';
 import { AddInventoryDialog } from '@/components/AddInventoryDialog';
 import { useToast } from '@/hooks/use-toast';
+import { removeVietnameseTones } from '@/lib/utils';
 
 export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,12 +79,25 @@ export const Inventory = () => {
 
   const transactionTypes = ['Tất cả', 'nhap', 'xuat', 'dieu_chinh'];
   
-  const filteredTransactions = transactions?.filter(transaction =>
-    (transaction.products?.ten_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     transaction.products?.ma_hang.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     transaction.ghi_chu?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedType === 'Tất cả' || transaction.loai_giao_dich === selectedType)
-  ) || [];
+  const filteredTransactions = transactions?.filter(transaction => {
+    const nameLower = transaction.products?.ten_hang?.toLowerCase() || '';
+    const codeLower = transaction.products?.ma_hang?.toLowerCase() || '';
+    const noteLower = transaction.ghi_chu?.toLowerCase() || '';
+    const nameNoAccent = removeVietnameseTones(nameLower);
+    const codeNoAccent = removeVietnameseTones(codeLower);
+    const noteNoAccent = removeVietnameseTones(noteLower);
+    const searchLower = searchTerm.toLowerCase();
+    const searchNoAccent = removeVietnameseTones(searchLower);
+    return (
+      (nameLower.includes(searchLower) ||
+       codeLower.includes(searchLower) ||
+       noteLower.includes(searchLower) ||
+       nameNoAccent.includes(searchNoAccent) ||
+       codeNoAccent.includes(searchNoAccent) ||
+       noteNoAccent.includes(searchNoAccent)) &&
+      (selectedType === 'Tất cả' || transaction.loai_giao_dich === selectedType)
+    );
+  }) || [];
 
   return (
     <div className="space-y-6">

@@ -99,3 +99,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix scroll for Radix Popover/CommandList in mobile/dialog */
+[data-radix-popper-content-wrapper] {
+  overflow: visible !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+[data-radix-popper-content-wrapper] .max-h-\[300px\] {
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: auto !important;
+  overflow-y: auto !important;
+}
+[role="dialog"] {
+  overflow: visible !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+/* Custom scrollbar for CommandList (desktop) */
+.max-h-\[300px\] {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+.max-h-\[300px\]::-webkit-scrollbar {
+  width: 8px;
+}
+.max-h-\[300px\]::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.max-h-\[300px\]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}

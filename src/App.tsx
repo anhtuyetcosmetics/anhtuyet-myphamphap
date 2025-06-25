@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,19 @@ import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 
 const queryClient = new QueryClient();
 
+function AllowScrollInPopover() {
+  useEffect(() => {
+    function allowScroll(e: TouchEvent) {
+      if ((e.target as HTMLElement)?.closest('.max-h-[300px]')) {
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener('touchmove', allowScroll, { passive: false });
+    return () => document.removeEventListener('touchmove', allowScroll);
+  }, []);
+  return null;
+}
+
 const App = () => {
   return (
     <StrictMode>
@@ -24,6 +37,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <PWAStatus />
+            <AllowScrollInPopover />
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />

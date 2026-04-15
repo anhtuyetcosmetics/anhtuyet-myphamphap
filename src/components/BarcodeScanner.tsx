@@ -1,149 +1,278 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { Button } from './ui/button';
-import { Loader2 } from 'lucide-react';
+import { Input } from './ui/input';
+import { Loader2, X, Flashlight, FlashlightOff, Keyboard, Camera, RefreshCcw } from 'lucide-react';
 
 interface BarcodeScannerProps {
   onBarcodeDetected: (barcode: string) => void;
   onError?: (error: string) => void;
+  onClose?: () => void;
+  /** Keep the camera open after each detection for continuous scanning. Default: true */
+  continuous?: boolean;
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onBarcodeDetected, onError }) => {
+/** Short beep using WebAudio – no asset needed. */
+function playBeep() {
+  try {
+    const AC = (window.AudioContext || (window as any).webkitAudioContext);
+    if (!AC) return;
+    const ctx = new AC();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.15;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, 120);
+  } catch {
+    /* no-op */
+  }
+}
+
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
+  onBarcodeDetected,
+  onError,
+  onClose,
+  continuous = true,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const lastCodeRef = useRef<{ code: string; at: number } | null>(null);
+
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [flash, setFlash] = useState(false);
+
+  const stopStream = useCallback(() => {
+    try { readerRef.current?.reset(); } catch {}
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
+  const initialize = useCallback(async () => {
+    try {
+      setIsInitializing(true);
+      setError(null);
+      stopStream();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      });
+      streamRef.current = stream;
+
+      // Torch capability probing
+      const track = stream.getVideoTracks()[0];
+      const caps: any = typeof track?.getCapabilities === 'function' ? track.getCapabilities() : {};
+      setTorchSupported(!!caps?.torch);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await new Promise<void>((resolve) => {
+          const v = videoRef.current!;
+          v.onloadedmetadata = () => v.play().then(() => resolve()).catch(() => resolve());
+        });
+      }
+
+      const reader = new BrowserMultiFormatReader();
+      readerRef.current = reader;
+      reader.decodeFromVideoDevice(null, videoRef.current, (result) => {
+        if (!result) return;
+        const code = result.getText();
+        const now = Date.now();
+        // Debounce duplicate scans for 1.5s
+        if (lastCodeRef.current && lastCodeRef.current.code === code && now - lastCodeRef.current.at < 1500) return;
+        lastCodeRef.current = { code, at: now };
+
+        playBeep();
+        if (navigator.vibrate) navigator.vibrate(60);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 400);
+
+        onBarcodeDetected(code);
+        if (!continuous) stopStream();
+      });
+
+      setIsInitializing(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Không thể truy cập camera';
+      setError(msg);
+      onError?.(msg);
+      setIsInitializing(false);
+    }
+  }, [continuous, onBarcodeDetected, onError, stopStream]);
 
   useEffect(() => {
-    const initializeScanner = async () => {
-      try {
-        setIsInitializing(true);
-        setError(null);
+    initialize();
+    return () => stopStream();
+  }, [initialize, stopStream]);
 
-        // Arrêter le stream existant s'il y en a un
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-        }
-
-        // Demander la permission de la caméra
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        });
-
-        streamRef.current = stream;
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // Attendre que la vidéo soit prête avant de commencer la lecture
-          await new Promise((resolve) => {
-            if (videoRef.current) {
-              videoRef.current.onloadedmetadata = () => {
-                if (videoRef.current) {
-                  videoRef.current.play().then(resolve).catch((err) => {
-                    console.error('Erreur lors de la lecture de la vidéo:', err);
-                    resolve(true); // Continuer même en cas d'erreur
-                  });
-                }
-              };
-            }
-          });
-        }
-
-        // Initialiser le lecteur de code-barres
-        const reader = new BrowserMultiFormatReader();
-        readerRef.current = reader;
-
-        setIsScanning(true);
-        reader.decodeFromVideoDevice(
-          null,
-          videoRef.current,
-          (result) => {
-            if (result) {
-              onBarcodeDetected(result.getText());
-            }
-          }
-        );
-
-        setIsInitializing(false);
-      } catch (err) {
-        console.error('Erreur lors de l\'initialisation de la caméra:', err);
-        setError(err instanceof Error ? err.message : 'Erreur inconnue');
-        if (onError) {
-          onError(err instanceof Error ? err.message : 'Erreur inconnue');
-        }
-        setIsInitializing(false);
-      }
-    };
-
-    initializeScanner();
-
-    return () => {
-      if (readerRef.current) {
-        readerRef.current.reset();
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-    };
-  }, [onBarcodeDetected, onError]);
-
-  const handleRetry = () => {
-    setError(null);
-    setIsInitializing(true);
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: !torchOn } as any] });
+      setTorchOn((t) => !t);
+    } catch (e) {
+      setTorchSupported(false);
     }
-    if (readerRef.current) {
-      readerRef.current.reset();
-    }
-    // Réinitialiser le scanner
-    const reader = new BrowserMultiFormatReader();
-    readerRef.current = reader;
-    setIsScanning(true);
+  };
+
+  const submitManual = () => {
+    const code = manualCode.trim();
+    if (!code) return;
+    playBeep();
+    onBarcodeDetected(code);
+    setManualCode('');
+    if (!continuous) onClose?.();
   };
 
   return (
-    <div className="relative w-full h-full">
-      {isInitializing ? (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span className="ml-2">Đang khởi tạo camera...</span>
+    <div className="relative w-full h-full bg-black text-white overflow-hidden">
+      {/* Video */}
+      {!manualMode && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          playsInline
+          autoPlay
+          muted
+        />
+      )}
+
+      {/* Flash effect */}
+      {flash && <div className="absolute inset-0 animate-flash-success pointer-events-none" />}
+
+      {/* Top bar */}
+      <div className="absolute top-0 inset-x-0 pt-safe z-20">
+        <div className="flex items-center justify-between p-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+            onClick={() => { stopStream(); onClose?.(); }}
+            aria-label="Đóng"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <div className="text-sm font-medium bg-black/40 px-3 py-1.5 rounded-full">
+            Quét mã vạch
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+            onClick={() => setManualMode((m) => !m)}
+            aria-label={manualMode ? 'Quay lại camera' : 'Nhập mã tay'}
+          >
+            {manualMode ? <Camera className="h-5 w-5" /> : <Keyboard className="h-5 w-5" />}
+          </Button>
         </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center h-full">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={handleRetry}>Thử lại</Button>
-        </div>
-      ) : (
-        <div className="relative w-full h-full">
-          <video
-            ref={videoRef}
-            className="w-full h-full object-cover"
-            playsInline
-            autoPlay
-          />
-          {/* Overlay avec cadre de scan */}
-          <div className="absolute inset-0 bg-black/50">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-64 border-2 border-white rounded-lg relative">
-                {/* Coin supérieur gauche */}
-                <div className="absolute -top-1 -left-1 w-8 h-8 border-t-2 border-l-2 border-white"></div>
-                {/* Coin supérieur droit */}
-                <div className="absolute -top-1 -right-1 w-8 h-8 border-t-2 border-r-2 border-white"></div>
-                {/* Coin inférieur gauche */}
-                <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-2 border-l-2 border-white"></div>
-                {/* Coin inférieur droit */}
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-2 border-r-2 border-white"></div>
-              </div>
+      </div>
+
+      {/* Scanning UI */}
+      {!manualMode && !isInitializing && !error && (
+        <div className="absolute inset-0 z-10">
+          {/* dim mask with clear cutout */}
+          <div className="absolute inset-0 bg-black/55" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative w-72 h-72 max-w-[80vw] max-h-[50vh]">
+              {/* clear square */}
+              <div className="absolute inset-0 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]" />
+              {/* corners */}
+              <span className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-2xl" />
+              <span className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-2xl" />
+              <span className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-2xl" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-2xl" />
+              {/* scanning line */}
+              <div className="absolute inset-x-2 top-0 h-0.5 bg-primary/80 shadow-[0_0_12px_2px_hsl(var(--primary))] animate-scan-line" />
             </div>
+          </div>
+
+          <p className="absolute left-0 right-0 bottom-40 text-center text-white/80 text-sm px-8">
+            Đưa mã vạch vào khung để quét. Máy sẽ rung & kêu "bíp" khi nhận diện được.
+          </p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {isInitializing && (
+        <div className="absolute inset-0 z-10 grid place-items-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm">Đang khởi tạo camera…</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="absolute inset-0 z-10 grid place-items-center p-6">
+          <div className="max-w-sm text-center bg-black/70 rounded-2xl p-6 border border-white/10">
+            <p className="text-destructive font-medium mb-2">Lỗi camera</p>
+            <p className="text-sm text-white/70 mb-4">{error}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={initialize} variant="secondary">
+                <RefreshCcw className="h-4 w-4 mr-1" />
+                Thử lại
+              </Button>
+              <Button onClick={() => setManualMode(true)} variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                <Keyboard className="h-4 w-4 mr-1" />
+                Nhập tay
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual entry overlay */}
+      {manualMode && (
+        <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm p-6 flex flex-col justify-center">
+          <label className="text-sm mb-2 text-white/80">Nhập mã vạch thủ công</label>
+          <Input
+            autoFocus
+            inputMode="numeric"
+            value={manualCode}
+            onChange={(e) => setManualCode(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submitManual(); }}
+            placeholder="VD: 8934567123456"
+            className="bg-white text-foreground h-12 text-base"
+          />
+          <Button onClick={submitManual} className="mt-3 h-12 text-base" disabled={!manualCode.trim()}>
+            Xác nhận
+          </Button>
+        </div>
+      )}
+
+      {/* Bottom tools */}
+      {!manualMode && !error && (
+        <div className="absolute bottom-0 inset-x-0 z-20 pb-safe">
+          <div className="flex items-center justify-center gap-4 p-5">
+            {torchSupported && (
+              <Button
+                type="button"
+                onClick={toggleTorch}
+                size="icon"
+                className={`h-14 w-14 rounded-full ${torchOn ? 'bg-primary text-white' : 'bg-white/15 hover:bg-white/25 text-white'}`}
+                aria-label={torchOn ? 'Tắt đèn pin' : 'Bật đèn pin'}
+              >
+                {torchOn ? <FlashlightOff className="h-6 w-6" /> : <Flashlight className="h-6 w-6" />}
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -151,4 +280,4 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onBarcodeDetected, onEr
   );
 };
 
-export default BarcodeScanner; 
+export default BarcodeScanner;

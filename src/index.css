@@ -4,89 +4,94 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 350 30% 99%;
+    --foreground: 340 25% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 340 25% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 340 25% 14%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Rose / cosmetics brand */
+    --primary: 338 72% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 340 50% 96%;
+    --secondary-foreground: 338 55% 30%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 340 30% 96%;
+    --muted-foreground: 340 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 30 90% 95%;
+    --accent-foreground: 24 70% 35%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 150 60% 40%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --border: 340 25% 92%;
+    --input: 340 25% 92%;
+    --ring: 338 72% 52%;
 
-    --sidebar-background: 0 0% 98%;
+    --radius: 0.85rem;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 340 50% 98%;
+    --sidebar-foreground: 340 20% 25%;
+    --sidebar-primary: 338 72% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 340 60% 94%;
+    --sidebar-accent-foreground: 338 70% 35%;
+    --sidebar-border: 340 30% 90%;
+    --sidebar-ring: 338 72% 52%;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Safe-area helpers for iOS / Capacitor */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 340 20% 8%;
+    --foreground: 340 15% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 340 20% 10%;
+    --card-foreground: 340 15% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 340 20% 10%;
+    --popover-foreground: 340 15% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 338 72% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 340 15% 18%;
+    --secondary-foreground: 340 15% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 340 15% 18%;
+    --muted-foreground: 340 10% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 340 15% 22%;
+    --accent-foreground: 340 15% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --success: 150 50% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 340 15% 20%;
+    --input: 340 15% 20%;
+    --ring: 338 72% 60%;
+
+    --sidebar-background: 340 20% 10%;
+    --sidebar-foreground: 340 15% 90%;
+    --sidebar-primary: 338 72% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 340 15% 18%;
+    --sidebar-accent-foreground: 340 15% 95%;
+    --sidebar-border: 340 15% 18%;
+    --sidebar-ring: 338 72% 60%;
   }
 }
 
@@ -95,10 +100,80 @@
     @apply border-border;
   }
 
+  html, body {
+    @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Better touch targets on mobile */
+  button, [role="button"], a {
+    touch-action: manipulation;
   }
 }
+
+@layer utilities {
+  .safe-top { padding-top: var(--safe-top); }
+  .safe-bottom { padding-bottom: var(--safe-bottom); }
+  .pb-safe { padding-bottom: calc(var(--safe-bottom) + 0.5rem); }
+  .pt-safe { padding-top: calc(var(--safe-top) + 0.5rem); }
+
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(338 72% 58%) 0%, hsl(10 80% 62%) 100%);
+  }
+  .text-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(338 72% 52%) 0%, hsl(10 80% 55%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .shadow-soft {
+    box-shadow: 0 1px 2px hsl(340 25% 14% / 0.04), 0 8px 24px hsl(340 25% 14% / 0.06);
+  }
+  .shadow-pop {
+    box-shadow: 0 4px 14px hsl(338 72% 52% / 0.25);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 999px;
+  }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); opacity: 0.2; }
+  50%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0.2; }
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 hsl(338 72% 52% / 0.5); }
+  70%  { box-shadow: 0 0 0 16px hsl(338 72% 52% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(338 72% 52% / 0); }
+}
+@keyframes flash-success {
+  0%   { background: hsl(150 80% 60% / 0.0); }
+  30%  { background: hsl(150 80% 60% / 0.5); }
+  100% { background: hsl(150 80% 60% / 0.0); }
+}
+
+.animate-slide-in-left { animation: slide-in-left 0.25s ease-out; }
+.animate-scan-line { animation: scan-line 2s ease-in-out infinite; }
+.animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+.animate-flash-success { animation: flash-success 0.5s ease-out; }
 
 /* Fix scroll for Radix Popover/CommandList in mobile/dialog */
 [data-radix-popper-content-wrapper] {
@@ -117,18 +192,12 @@
   touch-action: auto !important;
 }
 
-/* Custom scrollbar for CommandList (desktop) */
 .max-h-\[300px\] {
   scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
 }
-.max-h-\[300px\]::-webkit-scrollbar {
-  width: 8px;
-}
+.max-h-\[300px\]::-webkit-scrollbar { width: 6px; }
 .max-h-\[300px\]::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-.max-h-\[300px\]::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 999px;
 }

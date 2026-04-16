@@ -158,29 +158,36 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       {flash && <div className="absolute inset-0 animate-flash-success pointer-events-none" />}
 
       {/* Top bar */}
-      <div className="absolute top-0 inset-x-0 pt-safe z-20">
-        <div className="flex items-center justify-between p-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
-            onClick={() => { stopStream(); onClose?.(); }}
+      <div className="absolute top-0 inset-x-0 pt-safe z-30 pointer-events-none">
+        <div className="flex items-center justify-between p-3 pointer-events-auto">
+          <button
+            type="button"
+            className="bg-black/60 hover:bg-black/80 text-white rounded-full h-11 w-11 grid place-items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              stopStream();
+              onClose?.();
+            }}
             aria-label="Đóng"
           >
             <X className="h-5 w-5" />
-          </Button>
-          <div className="text-sm font-medium bg-black/40 px-3 py-1.5 rounded-full">
+          </button>
+          <div className="text-sm font-medium bg-black/50 px-3 py-1.5 rounded-full">
             Quét mã vạch
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
-            onClick={() => setManualMode((m) => !m)}
+          <button
+            type="button"
+            className="bg-black/60 hover:bg-black/80 text-white rounded-full h-11 w-11 grid place-items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setManualMode((m) => !m);
+            }}
             aria-label={manualMode ? 'Quay lại camera' : 'Nhập mã tay'}
           >
             {manualMode ? <Camera className="h-5 w-5" /> : <Keyboard className="h-5 w-5" />}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -225,14 +232,26 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           <div className="max-w-sm text-center bg-black/70 rounded-2xl p-6 border border-white/10">
             <p className="text-destructive font-medium mb-2">Lỗi camera</p>
             <p className="text-sm text-white/70 mb-4">{error}</p>
-            <div className="flex gap-2 justify-center">
+            <div className="flex flex-wrap gap-2 justify-center">
               <Button onClick={initialize} variant="secondary">
                 <RefreshCcw className="h-4 w-4 mr-1" />
                 Thử lại
               </Button>
-              <Button onClick={() => setManualMode(true)} variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button onClick={() => setManualMode(true)} variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-transparent">
                 <Keyboard className="h-4 w-4 mr-1" />
                 Nhập tay
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  stopStream();
+                  onClose?.();
+                }}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10 bg-transparent"
+              >
+                Đóng
               </Button>
             </div>
           </div>
@@ -255,24 +274,56 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           <Button onClick={submitManual} className="mt-3 h-12 text-base" disabled={!manualCode.trim()}>
             Xác nhận
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-2 h-12 text-base border-white/30 text-white hover:bg-white/10 bg-transparent"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              stopStream();
+              onClose?.();
+            }}
+          >
+            Đóng
+          </Button>
         </div>
       )}
 
       {/* Bottom tools */}
       {!manualMode && !error && (
-        <div className="absolute bottom-0 inset-x-0 z-20 pb-safe">
-          <div className="flex items-center justify-center gap-4 p-5">
+        <div className="absolute bottom-0 inset-x-0 z-30 pb-safe pointer-events-none">
+          <div className="px-5 pt-4 pb-5 flex flex-col items-center gap-3 pointer-events-auto">
             {torchSupported && (
-              <Button
+              <button
                 type="button"
-                onClick={toggleTorch}
-                size="icon"
-                className={`h-14 w-14 rounded-full ${torchOn ? 'bg-primary text-white' : 'bg-white/15 hover:bg-white/25 text-white'}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleTorch();
+                }}
+                className={`h-14 w-14 rounded-full grid place-items-center ${
+                  torchOn ? 'bg-primary text-white' : 'bg-white/15 hover:bg-white/25 text-white'
+                }`}
                 aria-label={torchOn ? 'Tắt đèn pin' : 'Bật đèn pin'}
               >
                 {torchOn ? <FlashlightOff className="h-6 w-6" /> : <Flashlight className="h-6 w-6" />}
-              </Button>
+              </button>
             )}
+
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                stopStream();
+                onClose?.();
+              }}
+              className="w-full max-w-sm h-12 bg-white text-foreground hover:bg-white/90 font-semibold"
+            >
+              <X className="h-5 w-5 mr-2" />
+              Đóng
+            </Button>
           </div>
         </div>
       )}

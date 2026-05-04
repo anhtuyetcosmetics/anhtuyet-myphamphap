@@ -94,7 +94,7 @@ export const ProductManager = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 lg:p-6">
       <ProductHeader onAddProduct={() => setIsAddDialogOpen(true)} />
 
       <ProductSearch
@@ -161,25 +161,9 @@ export const ProductManager = () => {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="flex items-center gap-1">
-                <Select
-                  value={currentPage.toString()}
-                  onValueChange={(value) => handlePageChange(Number(value))}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue>
-                      Trang {currentPage} / {totalPages}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <SelectItem key={page} value={page.toString()}>
-                        Trang {page}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <span className="text-sm text-gray-700 whitespace-nowrap">
+                Trang {currentPage} / {totalPages}
+              </span>
               <Button
                 variant="outline"
                 size="icon"

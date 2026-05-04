@@ -9,9 +9,9 @@ interface ProductHeaderProps {
 
 export const ProductHeader: React.FC<ProductHeaderProps> = ({ onAddProduct }) => {
   return (
-    <div className="flex items-center justify-between">
-      <h1 className="text-3xl font-bold text-gray-900">Sản phẩm</h1>
-      <Button 
+    <div className="flex items-center justify-end md:justify-between">
+      <h1 className="hidden md:block text-3xl font-bold text-gray-900">Sản phẩm</h1>
+      <Button
         className="bg-blue-600 hover:bg-blue-700"
         onClick={onAddProduct}
       >

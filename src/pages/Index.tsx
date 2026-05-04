@@ -58,7 +58,7 @@ const Index = () => {
           title={TAB_TITLES[activeTab] ?? 'Ánh Tuyết Cosmetics'}
           onOpenMenu={() => setMobileMenuOpen(true)}
         />
-        <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <div className="flex-1 overflow-y-auto pb-28 md:pb-0">
           {renderContent()}
         </div>
         <MobileBottomNav activeTab={activeTab} setActiveTab={handleSelectTab} />

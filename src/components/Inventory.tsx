@@ -17,6 +17,7 @@ import { useInventoryTransactions } from '@/hooks/useInventory';
 import { AddInventoryDialog } from '@/components/AddInventoryDialog';
 import { useToast } from '@/hooks/use-toast';
 import { removeVietnameseTones } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,13 +27,14 @@ export const Inventory = () => {
   
   const { data: transactions, isLoading, error } = useInventoryTransactions();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Focus sur l'input au montage du composant
-    if (inputRef.current) {
+    // Chỉ auto-focus trên desktop để tránh bật bàn phím trên mobile
+    if (!isMobile && inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [isMobile]);
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
@@ -100,10 +102,10 @@ export const Inventory = () => {
   }) || [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Kho hàng</h1>
-        <Button 
+    <div className="space-y-6 p-4 lg:p-6">
+      <div className="flex items-center justify-end md:justify-between">
+        <h1 className="hidden md:block text-3xl font-bold text-gray-900">Kho hàng</h1>
+        <Button
           className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setIsAddDialogOpen(true)}
         >
@@ -145,66 +147,56 @@ export const Inventory = () => {
       <div className="space-y-4">
         {filteredTransactions.map((transaction) => (
           <Card key={transaction.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+            <CardContent className="p-4 md:p-6">
+              <div className="space-y-3">
+                {/* Row 1: Badge + Product Name + Quantity */}
+                <div className="flex items-center gap-3">
                   <div className="flex items-center space-x-2">
                     {getTransactionIcon(transaction.loai_giao_dich)}
                     <Badge className={getTransactionColor(transaction.loai_giao_dich)}>
                       {getTransactionText(transaction.loai_giao_dich)}
                     </Badge>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate">
                       {transaction.products?.ten_hang}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      Mã: {transaction.products?.ma_hang}
-                    </p>
+                  </div>
+                  <div className="flex-shrink-0 font-semibold text-gray-900">
+                    {transaction.loai_giao_dich === 'xuat' ? '-' : '+'}{transaction.so_luong}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-6">
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {transaction.loai_giao_dich === 'xuat' ? '-' : '+'}{transaction.so_luong}
-                    </p>
-                    <p className="text-sm text-gray-500">Số lượng</p>
-                  </div>
-
+                {/* Row 2: Code + Value + Date */}
+                <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 flex-wrap">
+                  <span className="truncate">Mã: {transaction.products?.ma_hang}</span>
                   {transaction.gia_tri && (
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
-                        {transaction.gia_tri.toLocaleString('vi-VN')} ₫
-                      </p>
-                      <p className="text-sm text-gray-500">Giá trị</p>
-                    </div>
+                    <>
+                      <span className="hidden md:inline">·</span>
+                      <span>{transaction.gia_tri.toLocaleString('vi-VN')} ₫</span>
+                    </>
                   )}
+                  <span className="hidden md:inline">·</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {transaction.ngay_giao_dich
+                      ? new Date(transaction.ngay_giao_dich).toLocaleDateString('vi-VN')
+                      : 'N/A'}
+                  </span>
+                  {transaction.nguoi_thuc_hien && (
+                    <>
+                      <span className="hidden md:inline">·</span>
+                      <span className="hidden md:inline">{transaction.nguoi_thuc_hien}</span>
+                    </>
+                  )}
+                </div>
 
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {transaction.ngay_giao_dich 
-                          ? new Date(transaction.ngay_giao_dich).toLocaleDateString('vi-VN')
-                          : 'N/A'
-                        }
-                      </span>
-                    </div>
-                    {transaction.nguoi_thuc_hien && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {transaction.nguoi_thuc_hien}
-                      </p>
-                    )}
+                {transaction.ghi_chu && (
+                  <div className="pt-2 border-t">
+                    <p className="text-sm text-gray-600">{transaction.ghi_chu}</p>
                   </div>
-                </div>
+                )}
               </div>
-
-              {transaction.ghi_chu && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-gray-600">{transaction.ghi_chu}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}

@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductSearchProps {
   searchTerm: string;
@@ -19,13 +20,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   categories
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Focus sur l'input au montage du composant
-    if (inputRef.current) {
+    // Chỉ auto-focus trên desktop để tránh bật bàn phím trên mobile
+    if (!isMobile && inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className="flex flex-col md:flex-row gap-4">

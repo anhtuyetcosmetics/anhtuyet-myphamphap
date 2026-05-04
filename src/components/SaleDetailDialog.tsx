@@ -7,16 +7,15 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  User, 
-  Calendar, 
-  DollarSign, 
+import {
+  User,
+  Calendar,
+  DollarSign,
   Package,
   FileText,
   Percent
 } from 'lucide-react';
-import { SaleWithDetails } from '@/hooks/useSales';
-import { supabase } from '@/integrations/supabase/client';
+import { SaleWithDetails, useUpdateSaleStatus } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
 
 interface SaleDetailDialogProps {
@@ -31,8 +30,8 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
   sale,
 }) => {
   const { toast } = useToast();
-  const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState(sale?.trang_thai || 'pending');
+  const updateStatusMutation = useUpdateSaleStatus();
 
   React.useEffect(() => {
     setStatus(sale?.trang_thai || 'pending');
@@ -40,18 +39,11 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
 
   const handleUpdateStatus = async () => {
     if (!sale) return;
-    setUpdating(true);
-    const { error } = await supabase
-      .from('sales')
-      .update({ trang_thai: status })
-      .eq('id', sale.id);
-    setUpdating(false);
-    if (error) {
-      toast({ title: 'Lỗi', description: 'Không thể cập nhật trạng thái', variant: 'destructive' });
-    } else {
+    try {
+      await updateStatusMutation.mutateAsync({ id: sale.id, trang_thai: status });
       toast({ title: 'Thành công', description: 'Đã cập nhật trạng thái đơn hàng.' });
-      // Cập nhật trạng thái trong UI (nếu cần, có thể gọi lại fetch hoặc reload)
-      if (sale) sale.trang_thai = status;
+    } catch (err) {
+      toast({ title: 'Lỗi', description: 'Không thể cập nhật trạng thái', variant: 'destructive' });
     }
   };
 
@@ -149,7 +141,7 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
                     className="border rounded px-2 py-1 text-sm"
                     value={status}
                     onChange={e => setStatus(e.target.value)}
-                    disabled={updating}
+                    disabled={updateStatusMutation.isPending}
                   >
                     <option value="pending">Đang xử lý</option>
                     <option value="completed">Hoàn thành</option>
@@ -158,10 +150,10 @@ export const SaleDetailDialog: React.FC<SaleDetailDialogProps> = ({
                   <button
                     className="ml-2 px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-60"
                     onClick={handleUpdateStatus}
-                    disabled={updating || status === sale.trang_thai}
+                    disabled={updateStatusMutation.isPending || status === sale.trang_thai}
                     type="button"
                   >
-                    {updating ? 'Đang lưu...' : 'Lưu'}
+                    {updateStatusMutation.isPending ? 'Đang lưu...' : 'Lưu'}
                   </button>
                   <Badge className={getStatusColor(status)}>
                     {getStatusText(status)}

@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   ShoppingCart,
   User,
   Calendar,
@@ -13,7 +13,8 @@ import {
   Eye,
   Printer,
   Loader2,
-  Percent
+  Percent,
+  AlertTriangle
 } from 'lucide-react';
 import { useSales } from '@/hooks/useSales';
 import { useToast } from '@/hooks/use-toast';
@@ -61,25 +62,32 @@ export const Sales = () => {
 
   const renderSaleAmount = (sale) => {
     const hasDiscount = sale.giam_gia_loai && sale.giam_gia_gia_tri && sale.giam_gia_so_tien;
-    
+    const isDiscountWarning = sale.giam_gia_so_tien && sale.giam_gia_so_tien > sale.tong_tien;
+
     return (
-      <div className="flex flex-col items-end">
+      <div className="flex flex-col items-end min-w-0 max-w-[60%]">
         {hasDiscount && (
-          <div className="flex items-center space-x-1 text-sm text-red-600">
-            <Percent className="h-3 w-3" />
-            <span>
-              {sale.giam_gia_loai === 'percentage' 
+          <div className="flex items-center space-x-1 text-sm text-red-600 min-w-0">
+            <Percent className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate break-all">
+              {sale.giam_gia_loai === 'percentage'
                 ? `${sale.giam_gia_gia_tri}%`
                 : `${sale.giam_gia_gia_tri.toLocaleString('vi-VN')} ₫`}
               {' '}(-{sale.giam_gia_so_tien.toLocaleString('vi-VN')} ₫)
             </span>
           </div>
         )}
-        <div className="flex items-center space-x-2">
-          <DollarSign className="h-4 w-4 text-gray-500" />
+        <div className={`flex items-center space-x-2 ${isDiscountWarning ? 'bg-red-50 px-2 py-1 rounded' : ''}`}>
+          <DollarSign className="h-4 w-4 text-gray-500 flex-shrink-0" />
           <span className="text-lg font-bold text-gray-900">
             {sale.thanh_tien.toLocaleString('vi-VN')} ₫
           </span>
+          {isDiscountWarning && (
+            <AlertTriangle
+              className="h-4 w-4 text-red-600 flex-shrink-0 cursor-help"
+              title="Đơn cần kiểm tra: giảm giá lớn hơn tổng tiền"
+            />
+          )}
         </div>
       </div>
     );
@@ -107,10 +115,10 @@ export const Sales = () => {
   ) || [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Bán hàng</h1>
-        <Button 
+    <div className="space-y-6 p-4 lg:p-6">
+      <div className="flex items-center justify-end md:justify-between">
+        <h1 className="hidden md:block text-3xl font-bold text-gray-900">Bán hàng</h1>
+        <Button
           className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setShowCreateDialog(true)}
         >

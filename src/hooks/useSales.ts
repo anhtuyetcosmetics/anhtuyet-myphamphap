@@ -54,12 +54,11 @@ export const useSales = () => {
           )
         `)
         .order('ngay_ban', { ascending: false });
-      
+
       if (error) {
-        console.error('Error fetching sales:', error);
         throw error;
       }
-      
+
       return data as SaleWithDetails[];
     },
   });
@@ -67,19 +66,18 @@ export const useSales = () => {
 
 export const useAddSale = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (sale: Omit<Sale, 'id' | 'ngay_ban'>) => {
       const { data, error } = await supabase
         .from('sales')
         .insert([sale])
         .select();
-      
+
       if (error) {
-        console.error('Error adding sale:', error);
         throw error;
       }
-      
+
       return data;
     },
     onSuccess: () => {
@@ -88,37 +86,68 @@ export const useAddSale = () => {
   });
 };
 
+interface UseAddSaleItemInput extends Omit<SaleItem, 'id' | 'thanh_tien'> {
+  ma_don_hang?: string;
+}
+
 export const useAddSaleItem = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (saleItem: Omit<SaleItem, 'id' | 'thanh_tien'>) => {
+    mutationFn: async (saleItem: UseAddSaleItemInput) => {
       const { data, error } = await supabase
         .from('sale_items')
         .insert([saleItem])
         .select();
-      
+
       if (error) {
-        console.error('Error adding sale item:', error);
         throw error;
       }
-      
+
       // Also create inventory transaction for the sale
-      await supabase
+      const ghi_chu = saleItem.ma_don_hang
+        ? `Bán hàng - Đơn ${saleItem.ma_don_hang}`
+        : `Bán hàng - Đơn ${saleItem.sale_id}`;
+
+      const { error: invError } = await supabase
         .from('inventory_transactions')
         .insert([{
           product_id: saleItem.product_id,
           loai_giao_dich: 'xuat',
           so_luong: saleItem.so_luong,
           gia_tri: saleItem.gia_ban * saleItem.so_luong,
-          ghi_chu: `Bán hàng - Đơn ${saleItem.sale_id}`
+          ghi_chu
         }]);
-      
+
+      if (invError) {
+        throw new Error(`Lỗi cập nhật kho: ${invError.message}`);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+};
+
+export const useUpdateSaleStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, trang_thai }: { id: number; trang_thai: string }) => {
+      const { error } = await supabase
+        .from('sales')
+        .update({ trang_thai })
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
     },
   });
 };

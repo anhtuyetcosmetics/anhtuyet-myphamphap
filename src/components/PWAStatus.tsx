@@ -10,8 +10,8 @@ export function PWAStatus() {
   useEffect(() => {
     if (!isOnline) {
       toast({
-        title: 'Offline Mode',
-        description: 'You are currently offline. Some features may be limited.',
+        title: 'Đang ở chế độ offline',
+        description: 'Bạn đang offline — một số tính năng có thể không dùng được.',
         variant: 'destructive',
       });
     }
@@ -20,8 +20,8 @@ export function PWAStatus() {
   useEffect(() => {
     if (offlineReady) {
       toast({
-        title: 'Ready for Offline',
-        description: 'The app is now ready for offline use.',
+        title: 'Sẵn sàng dùng offline',
+        description: 'App đã được cache, bạn vẫn dùng được khi mất mạng.',
       });
     }
   }, [offlineReady, toast]);
@@ -29,15 +29,15 @@ export function PWAStatus() {
   useEffect(() => {
     if (needRefresh) {
       toast({
-        title: 'New Version Available',
-        description: 'A new version is available. Click to update.',
+        title: 'Đã có phiên bản mới',
+        description: 'Bấm để cập nhật và tải lại app.',
         action: (
           <Button
             variant="default"
             onClick={updateServiceWorker}
             className="ml-2"
           >
-            Update Now
+            Cập nhật ngay
           </Button>
         ),
       });

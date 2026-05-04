@@ -52,8 +52,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, set
               >
                 <span
                   className={cn(
-                    'flex items-center justify-center h-9 w-9 rounded-full transition-all',
-                    active && 'bg-primary/10 scale-105'
+                    'flex items-center justify-center h-9 w-9 rounded-full transition-all'
                   )}
                 >
                   <Icon className="h-5 w-5" />

@@ -32,7 +32,9 @@ export function usePWA() {
     const updateSW = registerSW();
     await updateSW();
     setNeedRefresh(false);
-    window.location.reload();
+    setTimeout(() => {
+      window.location.reload();
+    }, 200);
   };
 
   return {

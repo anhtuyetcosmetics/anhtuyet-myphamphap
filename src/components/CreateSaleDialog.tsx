@@ -160,6 +160,16 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({ open, onOpen
       return;
     }
 
+    // Sanity check discount
+    if (discountAmount > subtotal && subtotal > 0) {
+      toast({
+        title: 'Giảm giá vượt tổng',
+        description: 'Giảm giá lớn hơn tổng đơn — kiểm tra lại trước khi tạo đơn.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const ma = generateOrderCode();
@@ -347,13 +357,10 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({ open, onOpen
 
                   {showDetails && (
                     <div className="mt-3 space-y-4 bg-muted/40 rounded-xl p-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Khách hàng</Label>
-                        <CustomerSearchSelect
-                          selectedCustomerId={customerId}
-                          onCustomerSelect={setCustomerId}
-                        />
-                      </div>
+                      <CustomerSearchSelect
+                        selectedCustomerId={customerId}
+                        onCustomerSelect={setCustomerId}
+                      />
 
                       <div className="space-y-1.5">
                         <Label className="text-xs">Trạng thái</Label>
@@ -404,6 +411,16 @@ export const CreateSaleDialog: React.FC<CreateSaleDialogProps> = ({ open, onOpen
                               const n = parseFloat(e.target.value) || 0;
                               const v = discount.type === 'percentage' ? Math.min(100, Math.max(0, n)) : Math.max(0, n);
                               setDiscount({ ...discount, value: v });
+
+                              // Sanity check discount amount
+                              const discountAmt = discount.type === 'percentage' ? (subtotal * v) / 100 : v;
+                              if (discount.type === 'fixed' && discountAmt > subtotal * 10 && subtotal > 0) {
+                                toast({
+                                  title: 'Giảm giá lớn bất thường',
+                                  description: `Giảm giá ${discountAmt.toLocaleString('vi-VN')}₫ vượt xa tổng đơn ${subtotal.toLocaleString('vi-VN')}₫. Kiểm tra lại.`,
+                                  variant: 'destructive',
+                                });
+                              }
                             }}
                             placeholder={discount.type === 'percentage' ? 'Nhập %' : 'Nhập số tiền'}
                             className="flex-1 h-10"

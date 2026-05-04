@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PWAStatus } from "@/components/PWAStatus";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -30,35 +31,39 @@ function AllowScrollInPopover() {
 
 const App = () => {
   return (
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PWAStatus />
-            <AllowScrollInPopover />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/reset-password" element={<ForgotPasswordForm />} />
-                <Route path="/auth/update-password" element={<UpdatePasswordForm />} />
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Index />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </StrictMode>
+    <ErrorBoundary name="root">
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <PWAStatus />
+              <AllowScrollInPopover />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/reset-password" element={<ForgotPasswordForm />} />
+                  <Route path="/auth/update-password" element={<UpdatePasswordForm />} />
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <ErrorBoundary name="main">
+                          <Index />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </StrictMode>
+    </ErrorBoundary>
   );
 };
 

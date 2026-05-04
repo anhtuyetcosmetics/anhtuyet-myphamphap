@@ -40,27 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (usernameOrEmail: string, password: string) => {
     try {
-      console.log('=== Login Attempt ===');
-      console.log('Input:', usernameOrEmail);
-      
       // First, check if the input is a valid email
       const isEmail = usernameOrEmail.includes('@');
-      
+
       if (isEmail) {
-        console.log('Input is an email, trying direct sign in...');
         const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
           email: usernameOrEmail,
           password,
         });
 
-        console.log('Direct sign in result:', { 
-          success: !signInError,
-          error: signInError?.message,
-          data: signInData 
-        });
-
         if (!signInError) {
-          console.log('Direct sign in successful');
           toast({
             title: "Đăng nhập thành công",
             description: "Chào mừng bạn quay trở lại!",
@@ -70,19 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Now try to find the user by username
-      console.log('Looking up username:', usernameOrEmail);
-      
       // First, let's check if we can access the staff table at all
       const { data: allStaff, error: allStaffError } = await supabase
         .from('staff')
         .select('*')
         .limit(5);
-      
-      console.log('All staff data (first 5 rows):', {
-        data: allStaff,
-        error: allStaffError,
-        query: 'select * from staff limit 5'
-      });
 
       // Now try the username lookup
       const { data: staffData, error: staffError, count } = await supabase
@@ -90,60 +71,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('email, username', { count: 'exact' })
         .ilike('username', usernameOrEmail);
 
-      console.log('Raw staff lookup result:', { 
-        data: staffData,
-        error: staffError,
-        count,
-        query: `select email, username from staff where username ilike '${usernameOrEmail}'`
-      });
-
       if (staffError) {
-        console.error('Staff lookup error details:', {
-          code: staffError.code,
-          message: staffError.message,
-          details: staffError.details,
-          hint: staffError.hint
-        });
+        console.error('Staff lookup error:', staffError.message);
         if (staffError.code === 'PGRST116') {
-          console.log('No staff found with username:', usernameOrEmail);
           throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
         }
         throw new Error('Lỗi hệ thống, vui lòng thử lại sau');
       }
 
       if (!staffData || staffData.length === 0) {
-        // If no exact match, try to find all staff to see what usernames exist
-        const { data: usernames, error: usernamesError } = await supabase
-          .from('staff')
-          .select('username')
-          .limit(10);
-        
-        console.log('Available usernames:', {
-          data: usernames?.map(s => s.username),
-          error: usernamesError,
-          query: 'select username from staff limit 10'
-        });
         throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
       }
 
       const userData = staffData[0];
-      console.log('Found user data:', userData);
 
       // Try to sign in with the found email
-      console.log('Trying to sign in with email:', userData.email);
       const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
         email: userData.email,
         password,
       });
 
-      console.log('Final sign in result:', { 
-        success: !signInError,
-        error: signInError?.message,
-        data: signInData 
-      });
-
       if (signInError) {
-        console.error('Sign in error:', signInError);
+        console.error('Sign in error:', signInError.message);
         throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
       }
 
@@ -152,10 +101,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Chào mừng bạn quay trở lại!",
       });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', (error as Error).message);
       toast({
         title: "Lỗi đăng nhập",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
       throw error;
@@ -191,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       toast({
         title: "Lỗi đăng ký",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
       throw error;
@@ -209,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       toast({
         title: "Lỗi đăng xuất",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
       throw error;

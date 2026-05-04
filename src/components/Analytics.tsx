@@ -120,8 +120,8 @@ export const Analytics = () => {
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Bảng thống kê</h1>
+      <div className="flex items-center justify-end md:justify-between">
+        <h1 className="hidden md:block text-2xl lg:text-3xl font-bold text-gray-900">Bảng thống kê</h1>
         <div className="flex items-center space-x-2 text-sm" style={{ color: FRANCE_COLORS.gray }}>
           <Calendar className="h-4 w-4" />
           <span>Dữ liệu thời gian thực</span>

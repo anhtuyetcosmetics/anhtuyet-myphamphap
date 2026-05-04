@@ -104,10 +104,10 @@ export const Customers = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Khách hàng</h1>
-        <Button 
+    <div className="space-y-6 p-4 lg:p-6">
+      <div className="flex items-center justify-end md:justify-between">
+        <h1 className="hidden md:block text-3xl font-bold text-gray-900">Khách hàng</h1>
+        <Button
           className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setIsAddDialogOpen(true)}
         >
@@ -156,9 +156,9 @@ export const Customers = () => {
                 )}
                 
                 {customer.dia_chi && (
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{customer.dia_chi}</span>
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-600 truncate">{customer.dia_chi}</span>
                   </div>
                 )}
 
@@ -236,7 +236,7 @@ export const Customers = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="icon"
@@ -245,25 +245,9 @@ export const Customers = () => {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="flex items-center gap-1">
-                <Select
-                  value={currentPage.toString()}
-                  onValueChange={(value) => handlePageChange(Number(value))}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue>
-                      Trang {currentPage} / {totalPages}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <SelectItem key={page} value={page.toString()}>
-                        Trang {page}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <span className="text-sm text-gray-700 whitespace-nowrap">
+                Trang {currentPage} / {totalPages}
+              </span>
               <Button
                 variant="outline"
                 size="icon"

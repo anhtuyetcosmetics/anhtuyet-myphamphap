@@ -18,7 +18,7 @@ export const useProducts = () => {
   return useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      let allProducts: Product[] = [];
+      const allProducts: Product[] = [];
       let lastId = 0;
       const pageSize = 2000; // Tăng lên 2000 bản ghi mỗi lần
       let hasMore = true;
@@ -41,13 +41,9 @@ export const useProducts = () => {
           break;
         }
 
-        allProducts = [...allProducts, ...data];
+        allProducts.push(...data);
         lastId = data[data.length - 1].id;
-
-        console.log(`Fetched ${data.length} products, total so far: ${allProducts.length}`);
       }
-
-      console.log('Total products fetched:', allProducts.length);
       
       // Sắp xếp lại theo tên sản phẩm
       allProducts.sort((a, b) => a.ten_hang.localeCompare(b.ten_hang));
@@ -61,19 +57,18 @@ export const useProducts = () => {
 
 export const useAddProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (product: Omit<Product, 'id'>) => {
       const { data, error } = await supabase
         .from('products')
         .insert([product])
         .select();
-      
+
       if (error) {
-        console.error('Error adding product:', error);
         throw error;
       }
-      
+
       return data;
     },
     onSuccess: () => {
@@ -84,7 +79,7 @@ export const useAddProduct = () => {
 
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, ...product }: Partial<Product> & { id: number }) => {
       const { data, error } = await supabase
@@ -92,12 +87,11 @@ export const useUpdateProduct = () => {
         .update(product)
         .eq('id', id)
         .select();
-      
+
       if (error) {
-        console.error('Error updating product:', error);
         throw error;
       }
-      
+
       return data;
     },
     onSuccess: () => {
@@ -108,16 +102,15 @@ export const useUpdateProduct = () => {
 
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
-        console.error('Error deleting product:', error);
         throw error;
       }
     },

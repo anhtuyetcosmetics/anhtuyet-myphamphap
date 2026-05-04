@@ -1,13 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { useAddInventoryTransaction, InventoryTransaction } from '@/hooks/useInventory';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
+import { ProductSearchSelect } from './ProductSearchSelect';
 
 interface AddInventoryDialogProps {
   open: boolean;
@@ -15,12 +16,23 @@ interface AddInventoryDialogProps {
 }
 
 export const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({ open, onOpenChange }) => {
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<InventoryTransaction, 'id' | 'ngay_giao_dich'>>();
+  const { register, handleSubmit, reset, watch, formState: { errors }, setValue } = useForm<Omit<InventoryTransaction, 'id' | 'ngay_giao_dich'>>();
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [selectedProductName, setSelectedProductName] = useState<string>('');
   const addTransaction = useAddInventoryTransaction();
   const { data: products } = useProducts();
   const { toast } = useToast();
 
   const watchedType = watch('loai_giao_dich');
+
+  const handleProductSelect = (productId: number) => {
+    const product = products?.find(p => p.id === productId);
+    if (product) {
+      setSelectedProductId(productId);
+      setSelectedProductName(product.ten_hang);
+      setValue('product_id', productId.toString());
+    }
+  };
 
   const onSubmit = async (data: Omit<InventoryTransaction, 'id' | 'ngay_giao_dich'>) => {
     try {
@@ -54,19 +66,11 @@ export const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({ open, on
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="product_id">Sản phẩm *</Label>
-            <select
-              id="product_id"
-              {...register('product_id', { required: 'Sản phẩm là bắt buộc' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Chọn sản phẩm</option>
-              {products?.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.ten_hang} ({product.ma_hang})
-                </option>
-              ))}
-            </select>
+            <ProductSearchSelect
+              selectedProductId={selectedProductId || 0}
+              onProductSelect={handleProductSelect}
+              placeholder="Chọn sản phẩm"
+            />
             {errors.product_id && (
               <p className="text-sm text-red-600 mt-1">{errors.product_id.message}</p>
             )}

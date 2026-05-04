@@ -116,7 +116,7 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
       <div className="p-2 border-t border-blue-100">
         <Button
           size="sm"
-          className="w-full bg-red-600 hover:bg-red-700 text-white"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
           onClick={() => {
             setAddCustomerOpen(true);
             setOpen(false);

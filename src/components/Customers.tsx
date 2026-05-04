@@ -72,10 +72,14 @@ export const Customers = () => {
     const nameNoAccent = removeVietnameseTones(nameLower);
     const searchLower = searchTerm.toLowerCase();
     const searchNoAccent = removeVietnameseTones(searchLower);
+    const addressLower = customer.dia_chi?.toLowerCase() ?? '';
+    const addressNoAccent = removeVietnameseTones(addressLower);
     return (
       nameLower.includes(searchLower) ||
       nameNoAccent.includes(searchNoAccent) ||
-      (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
+      (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, ''))) ||
+      addressLower.includes(searchLower) ||
+      addressNoAccent.includes(searchNoAccent)
     );
   });
 

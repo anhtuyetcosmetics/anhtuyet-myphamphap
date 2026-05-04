@@ -48,10 +48,14 @@ export const CustomerSearchSelect: React.FC<CustomerSearchSelectProps> = ({
       .filter(customer => {
         const nameLower = customer.ten_khach_hang.toLowerCase();
         const nameNoAccent = removeVietnameseTones(nameLower);
+        const addressLower = customer.dia_chi?.toLowerCase() ?? '';
+        const addressNoAccent = removeVietnameseTones(addressLower);
         return (
           nameLower.includes(searchLower) ||
           nameNoAccent.includes(searchNoAccent) ||
-          (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, '')))
+          (customer.dien_thoai && customer.dien_thoai.replace(/\s+/g, '').includes(searchLower.replace(/\s+/g, ''))) ||
+          addressLower.includes(searchLower) ||
+          addressNoAccent.includes(searchNoAccent)
         );
       })
       .slice(0, MAX_RESULTS);
